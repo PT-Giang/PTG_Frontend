@@ -1,0 +1,6 @@
+# Home verification
+Build and TypeScript passed. Source / maps to local /, replacing the user-authorized root redirect. Login/register/forgot-password implementations untouched.
+Desktop1440x900 measured card x16,y285,width268.8,height168, matching source baseline; second x300.8. Tablet768 grid2 columns; mobile390 grid1 column. No horizontal overflow in checked local viewports.
+Passed browser interaction checks: search empty-state/clear, create demo material, group by class, rename, soft delete, show deleted, restore, dark theme, feedback categories/local status, invite link dialog, Escape dismissal. A test material remains soft-deleted in local demo storage and is hidden by default.
+No browser console errors in final check. Seven runtime assets (logo/quill/avatar/create SVGs,3 icon fonts). Existing DM Sans reused. Six new components and six component specs. Three principal sections: header, material workspace, footer.
+Known limits: local demo data only, profile/editor not cloned, invite/share only local links, feedback not transmitted; supporting dialog forms and dark theme are approximations. Minor native rendering/menu geometry differences remain; no claim of pixel-identical full account flows.

@@ -1,0 +1,2 @@
+# QuizSession
+Local adaptation of generated quiz state, split from QuizView spec. Snapshot questions with choice radios or short answer field; timer uses absolute deadline and cleans interval. Submission locked against duplicate expiry/clicks, confirm unanswered, exact normalized short scoring. Persist completed attempt only. Background/dawn cards/primary submit, responsive readable labels. No source account generation performed.

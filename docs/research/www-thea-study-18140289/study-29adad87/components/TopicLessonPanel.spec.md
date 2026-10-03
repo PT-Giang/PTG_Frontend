@@ -1,0 +1,2 @@
+# TopicLessonPanel
+Explicit user addition, not source clone: textarea for topic/level/goal, optional keyword suggestion buttons, mock badge and Tạo bài học mẫu. Minimum10 maximum2000 chars. Async local service selected predefined content with matched/note metadata; no fake research citations. Preview title, overview/objectives, edit generated text in parent, add only after validation. Existing dawn/background/primary tokens,14px preview,12px badge/suggestions. Mobile wrapping and dialog scroll. ImportDialog owns final save. Pending work cannot commit after unmount.

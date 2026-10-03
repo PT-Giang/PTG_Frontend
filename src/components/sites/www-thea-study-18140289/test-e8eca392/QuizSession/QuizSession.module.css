@@ -1,0 +1,16 @@
+.root { max-width: 960px; padding: 0 16px 32px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.header h1 { font-size: 24px; margin: 0; }
+.header span { padding: 8px 16px; background: var(--dawn); border-radius: 10px; font-variant-numeric: tabular-nums; }
+.note { color: var(--text-secondary); font-size: 14px; }
+.question { min-width: 0; margin: 24px 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; }
+.question legend { font-weight: 600; padding: 0 8px; overflow-wrap: anywhere; }
+.option { display: flex; align-items: baseline; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; overflow-wrap: anywhere; }
+.option:hover { background: var(--dawn); }
+.option input { accent-color: var(--primary); flex-shrink: 0; }
+.answer { width: 100%; padding: 12px; background: var(--background); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; }
+.submit, .confirm button { background: var(--primary); color: var(--surface); border: 0; border-radius: 50px; padding: 8px 16px; cursor: pointer; }
+.confirm { background: var(--dawn); border-radius: 10px; padding: 16px; margin: 16px 0; }
+.confirm p { margin: 0 0 16px; }
+.confirm button { margin-right: 8px; }
+@media (max-width: 768px) { .root { padding: 0 0 24px; } .question { padding: 8px; } }

@@ -1,0 +1,85 @@
+.page {
+  --profile-grey-button: #616161;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+.panel {
+  padding: 16px;
+  border: 1.6px solid var(--primary);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.panel:last-of-type { margin-bottom: 0; }
+.returnPanel p { margin: 16px 0 0; }
+.heading {
+  font-size: 24px;
+  line-height: 1.5;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 576px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.field input, .field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: var(--background);
+  font: inherit;
+}
+.field select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.description, .localNote, .status, .error { margin: 0; }
+.localNote { font-size: 14px; color: var(--text-secondary); }
+.error { color: var(--danger); }
+.greyButton, .saveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14.4px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: var(--surface);
+  background: var(--profile-grey-button);
+}
+.saveButton { background: var(--primary); }
+.saveButton:hover:not(:disabled) { background: var(--primary-hover); }
+.saveButton:disabled { cursor: not-allowed; }
+.greyButton:hover { opacity: .85; }
+.deleteDescription { margin: 0 0 16px; }
+.dialog {
+  max-width: 480px;
+  width: calc(100% - 32px);
+  padding: 24px;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  color: var(--text-primary);
+  background: var(--background);
+}
+.dialog::backdrop { background: var(--tab-shadow); }
+.dialog p { margin: 16px 0 24px; }
+.dialog form { display: flex; justify-content: flex-end; }
+@media (max-width: 576px) {
+  .heading { font-size: 24px; }
+  .page { padding: 24px 16px; }
+}

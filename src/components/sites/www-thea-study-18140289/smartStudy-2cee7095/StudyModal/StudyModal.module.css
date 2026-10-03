@@ -1,0 +1,6 @@
+.dialog { --modal-backdrop: #0008; width: 500px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); margin: auto; padding: 20px; border: 0; border-radius: 8px; background: var(--background); color: var(--text-primary); overflow: auto; }
+.dialog::backdrop { background: var(--modal-backdrop); }
+.close { position: absolute; right: 8px; top: 4px; border: 0; background: transparent; color: inherit; font-size: 30px; width: 32px; height: 32px; }
+.content { padding: 16px; }
+.content h2 { margin: 0 0 24px; text-align: center; font-size: 24px; line-height: 36px; font-weight: 400; }
+@media(max-width:600px) { .dialog { padding: 16px; } .content { padding: 8px; } }

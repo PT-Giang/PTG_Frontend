@@ -1,0 +1,2 @@
+# ProfileActivity
+Source /profile/activity has challenges,rewards,4stats cards. Original CSS flex49% <=1700,100% <=1100,padding24px0,radius20,borderprimary,heading20px500. Local adaptation uses real aggregated active material,practice answered,quiz completed,correct count. Source daily server challenges/streak not available locally; display local progress rather than fake daily claims. Reward icons original avatarassets with crown80gold,lockedopacity.5. Parent wraps common tabs/header/footer. No source personal statistics copied. Mobile one column; meaningful empty states.

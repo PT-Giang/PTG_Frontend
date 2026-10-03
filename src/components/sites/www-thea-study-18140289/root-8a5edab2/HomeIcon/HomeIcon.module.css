@@ -1,0 +1,7 @@
+@font-face { font-family: TheaSolid; src: url('/sites/www-thea-study-18140289/root-8a5edab2/icons-solid.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: TheaRegular; src: url('/sites/www-thea-study-18140289/root-8a5edab2/icons-regular.woff2') format('woff2'); font-display: block; }
+@font-face { font-family: TheaBrands; src: url('/sites/www-thea-study-18140289/root-8a5edab2/icons-brands.woff2') format('woff2'); font-display: block; }
+.solid, .regular, .brands { display: inline-block; font-style: normal; font-weight: normal; line-height: 1; }
+.solid { font-family: TheaSolid; }
+.regular { font-family: TheaRegular; }
+.brands { font-family: TheaBrands; }

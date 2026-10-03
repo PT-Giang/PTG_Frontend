@@ -1,0 +1,18 @@
+.wrapper { container-type: inline-size; position: relative; min-width: 0; }
+.card { --home-card-text: #eef1f9; position: relative; aspect-ratio: 1.6; border-radius: 25.6px; background: var(--home-card); color: var(--home-card-text); padding: 2vh 6cqw 2vh 8cqw; display: flex; gap: 1vh; transition: transform .2s; }
+.open { color: inherit; border: 0; background: transparent; padding: 0; text-align: left; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
+.open::after { content: ""; position: absolute; inset: 0; border-radius: 25.6px; }
+.open h3 { margin: 0; font-size: clamp(.9rem,6cqw,1.2rem); line-height: 1.25; font-weight: 700; letter-spacing: .02em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.className { font-size: 12px; margin-top: 8px; }
+.books { position: absolute; right: 11cqw; bottom: 2vh; font-size: clamp(1.5rem,25cqw,4rem); color: var(--home-card-icon); opacity: .5; transform: translate(20%,20%) rotate(15deg); pointer-events: none; transition: opacity .4s,transform .4s; line-height: 1.5; }
+.more { z-index: 2; align-self: start; background: transparent; border: 2px solid transparent; color: inherit; padding: 12px; font-size: 17.6px; line-height: 1; border-radius: 6px; }
+.more:hover { background: var(--home-card-hover); }
+.wrapper:hover .card { transform: translateY(-1vh); }
+.wrapper:hover .books { opacity: 1; transform: translate(15%,15%) scale(1.2); }
+.menu { position: absolute; right: 12px; top: 58px; background: var(--home-menu); color: var(--text-primary); border-radius: 10px; z-index: 5; box-shadow: 0 4px 18px var(--shadow); min-width: 180px; overflow: hidden; }
+.menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 16px; background: transparent; border: 0; color: inherit; text-align: left; }
+.menu button:hover { background: var(--tab-active); }
+.menu span { width: 20px; }
+.deleted { opacity: .55; }
+@media(max-width:600px) { .card { min-height: 112px; max-height: 160px; aspect-ratio: auto; align-items: center; }.open h3 { font-size: 17.6px; -webkit-line-clamp: 3; }.more { align-self: center; }.books { font-size: 80px; bottom: 10%; right: 20%; } }
+@media(prefers-reduced-motion:reduce) { .card,.books { transition: none; } }

@@ -1,0 +1,11 @@
+# MemorizeView
+
+Target: src/components/sites/www-thea-study-18140289/memorize-121927a4/MemorizeView/MemorizeView.tsx.
+Interaction: click-driven, keyboard navigation, local persistence through onChange.
+DOM: top links Danh sách / Bộ thẻ / Trò chơi, status counters, central card, previous/index/next, flip and rating buttons. List has editable terms; game matches terms to definitions.
+Computed desktop source: card background #dadfed (var(--dawn)), max width930px, observed height488.4px at1440x900; centered front48px/72, back24px/36 padded0 16. Rating container280x72 padding8; circular controls56x56, icon24, colors #ff3232/#fdbd19/#39cb3f. Buttons/arrows48px. Inherit DM Sans and --text-primary #120537. Top tabs16px with active primary#028ee1 and underline. Counters Đang học / Đang xem lại / Biết / Đã thành thạo. Card front/back toggled by click or down arrow; left wrong, up uncertain, right known. Skip rating before flip; ignore shortcuts inside inputs. Do not grade just from navigation. Local level0..3 counters.
+Responsive: shell switches bottom nav at800px (source CSS), available card width100%, font scales to24/36 on mobile; prevent horizontal overflow. Mobile card flexible min-height300px. Exact source mobile card measurements unavailable; document adaptation.
+Source introductory text: Chào mừng đến với Thẻ Ghi Nhớ Thông Minh. Local version must not claim true spaced repetition; simple progress levels and local study supported.
+Assets: existing HomeIcon for edit/close/plus/arrows; no new imagery. No animation required; reduced motion support if transitions added.
+Props: StudyViewProps from @/study/types plus mode:"list"|"flashcards"|"games". Parent handles storage. Use onChange({...workspace,terms:newTerms}); preserve all other fields. Empty: explain add material/terms with Link /study/{materialId}; list supports manual add and edit/delete, search. Persist term ID and level. Matching game pairs use IDs, not text as identity; no duplicate matches. No source private content copied.
+Screenshots: source desktop flashcard inspected inline previous turn, mobile shell inspected inline current turn; no exported files. List/game are local functional adaptations, no pixel-perfect claim for unobserved states.

@@ -1,0 +1,3 @@
+# GuideView
+
+Click-driven tabs Hướng dẫn học tập / Tóm tắt / Podcast ôn tập (source routes /studyGuides/id,/summaries/id,/podcasts/id). This local phase implements guide and summary, plus optional browser read-aloud with explicit local voice label instead of pretending AI podcast. Text source itself is private/session-generated and not reused. Guide content derived from local documents, editable and downloadable plain text. Summary extracts first six substantial lines per document with source titles and clear extractive label. Source h1 font32/38.4, h2 24/28.8, h3 20/24 all margin0 0 16. Full content padding16, background inherited. Tabs16 active primary underline. Mobile wrap tabs and long text. Empty link add documents. Actions edit/save/cancel/download. No remote AI.

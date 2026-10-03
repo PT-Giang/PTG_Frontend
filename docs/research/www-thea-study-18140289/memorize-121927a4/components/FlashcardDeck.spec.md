@@ -1,0 +1,2 @@
+# FlashcardDeck
+Split of MemorizeView spec. Source card max930px,min-height488px, dawn; front48/72,back24/36; mobile800 front24/back20,min-height300. Four level counters. Click/down arrow flips, ratings require revealed answer. Wrong sets0, uncertain1, known increments max3. Previous/next do not change level. Ignore shortcuts in inputs. Circular56px ratings and48px arrows. Persist via parent onChange, no source-generated personal content.

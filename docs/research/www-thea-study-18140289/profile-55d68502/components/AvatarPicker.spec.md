@@ -1,0 +1,2 @@
+# AvatarPicker
+Click-driven native modal, heading Chọn hình đại diện của bạn25.6px, gridwrap centered,maxheight370 overflowauto. Options75x75 padding8;selectedborder2 dashed text radius20%;lockedopacity.5 and lock icon. Original avatar SVGs from src/profile/avatars.ts with first12 selectable matching observed source state; rest disabled, no pretend purchase/unlock. Hủy/Gửi actions, only Gửi commits callback, Escape cancels. Mobile maxwidthcalc(100%-16), desktop600. No generated assets.

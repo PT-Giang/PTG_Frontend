@@ -1,0 +1,4 @@
+import styles from "./HomeIcon.module.css";
+interface HomeIconProps { name: string; variant?: "solid" | "regular" | "brands"; className?: string }
+const glyphs: Record<string, string> = { plane: "\uf1d8", feedback: "\uf4ad", crown: "\uf521", search: "\uf002", calendar: "\ue0d2", grid: "\ue195", folder: "\uf07b", trash: "\uf2ed", trashOff: "\ue2b4", books: "\uf5db", more: "\uf142", arrow: "\uf061", down: "\uf107", close: "\uf00d", share: "\uf234", edit: "\uf303", move: "\ue18b", discord: "\uf392", info: "\uf05a", email: "\uf0e0", instagram: "\uf16d", profile: "\uf501", language: "\uf1ab", bell: "\uf0f3", copy: "\uf0c5", restore: "\uf0e2", plus: "\uf067" };
+export default function HomeIcon({ name, variant = "solid", className = "" }: HomeIconProps) { return <span className={`${styles[variant]} ${className}`} aria-hidden="true">{glyphs[name] || glyphs.info}</span>; }

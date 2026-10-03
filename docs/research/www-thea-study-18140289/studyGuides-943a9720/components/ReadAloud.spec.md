@@ -1,0 +1,2 @@
+# ReadAloud
+Local adaptation for source podcast navigation. Explicit on-device text-to-speech, feature detect localService voice and display unavailable state. Start/pause/resume/stop, voice selector, chunk long text, cleanup on unmount. No network text synthesis, no fake podcast generation. Thea tokens and wrapping controls. This is user-authorized local-first functionality rather than source audio assets.

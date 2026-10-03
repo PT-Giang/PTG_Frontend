@@ -1,0 +1,6 @@
+.dialog { --profile-backdrop: rgba(0, 0, 0, .4); max-width: 480px; width: calc(100% - 32px); padding: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--background); color: var(--text-primary); }
+.dialog::backdrop { background: var(--profile-backdrop); }
+.content { padding: 24px; }
+.content h2 { margin: 0 0 16px; font-size: 24px; }
+.content p { margin: 0 0 24px; }
+.content button { display: block; margin-left: auto; border: 0; border-radius: 999px; padding: 8px 16px; background: var(--primary); color: var(--surface); cursor: pointer; }

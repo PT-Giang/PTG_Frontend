@@ -1,0 +1,42 @@
+.button {
+  --plus-white: #fff;
+  --plus-blue: #007bff;
+  --plus-shadow: #0003;
+  --plus-glow: #cb9ce7a6;
+  position: relative;
+  isolation: isolate;
+  width: fit-content;
+  min-height: 38px;
+  padding: 6px 40.8px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--plus-blue);
+  color: var(--plus-white);
+  font: inherit;
+  box-shadow: 0 8px 15px var(--plus-shadow);
+  transition: transform .18s ease, box-shadow .22s ease;
+}
+.button:hover { transform: translateY(-2px); box-shadow: 0 0 24px 4px var(--plus-glow); }
+.label { position: relative; z-index: 2; }
+.stars { position: absolute; inset: 0; pointer-events: none; }
+.star { position: absolute; animation: twinkle 2s ease-in-out infinite; transition: translate .42s ease; }
+.topLeft { top: -4px; left: 14px; rotate: -16deg; }
+.topRight { top: -4px; right: 14px; rotate: 20deg; animation-delay: .15s; }
+.bottomLeft { bottom: -4px; left: 6px; rotate: 12deg; animation-delay: .3s; }
+.bottomRight { bottom: -4px; right: 6px; rotate: -24deg; animation-delay: .45s; }
+.foreground { position: absolute; inset: 0; z-index: 1; }
+.background { position: absolute; inset: 0; }
+.button:hover .foreground .topLeft { translate: -4px -20px; }
+.button:hover .foreground .topRight { translate: 30px -12px; }
+.button:hover .foreground .bottomLeft { translate: -20px 14px; }
+.button:hover .foreground .bottomRight { translate: -10px 25px; }
+.button:hover .background .topLeft { translate: -34px -20px; }
+.button:hover .background .topRight { translate: 0 -20px; }
+.button:hover .background .bottomLeft { translate: 10px 24px; }
+.button:hover .background .bottomRight { translate: 20px 18px; }
+@keyframes twinkle { 0%, 100% { scale: .95; opacity: .9; } 50% { scale: 1.2; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .button, .star { animation: none; transition: none; }
+  .button:hover { transform: none; }
+  .button:hover .stars .star { translate: none; }
+}

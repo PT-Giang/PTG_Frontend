@@ -1,0 +1,1 @@
+.horizontal-divider{text-align:center;position:relative;margin:20px 0}.horizontal-divider :before,.horizontal-divider :after{content:"";background-color:#a1a3a5;height:1px;width:35%;position:absolute;top:50%;transform:translateY(-50%)}.horizontal-divider :before{left:5%}.horizontal-divider :after{right:5%}.horizontal-divider span{padding:0 10px}

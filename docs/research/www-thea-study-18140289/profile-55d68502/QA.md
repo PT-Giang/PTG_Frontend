@@ -1,0 +1,9 @@
+# Profile QA — 2026-09-06
+
+Source https://www.thea.study/profile → http://localhost:3000/profile. Observed supporting /profile/edit and /profile/activity implemented at exact matching paths. Existing home/login/register/recovery and all study routes preserved. Header profile and achievements items now navigate locally and display persisted profile name/avatar.
+
+Six new components and six specification files: ProfilePage, ProfileOverview, ProfileEdit, AvatarPicker, ProfileActivity, ProfileNotice. Three overview sections (identity/subscription/account), supporting editor and activity views. Seventy source SVG avatar assets recovered; twelve selectable, remaining displayed locked. Existing logos/fonts reused. Original profile and edit CSS retained as research.
+
+Browser verification: change avatar and save; edit name; header name/avatar synchronize; edit school and persist across navigation; activity shows local totals; delete-account button opens honest non-destructive local notice; desktop1440/mobile390 screenshots inspected and spacing corrected; tablet768 no horizontal overflow; browser error log empty. QA edits restored to generic defaults. Screenshots inline only—no documented screenshot-file export available. Build/typecheck pass; existing17 study regression test groups pass.
+
+Known adaptations: source user name,email,support code not copied. Profile defaults generic. School input/local role and education selectors replace backend lookup. Subscription/help controls show local-only notices, no payment or remote submission. Preferences store language but do not translate UI. Activity uses real aggregate local counters in place of server daily/streak/challenge graphs; reward unlock unavailable. Upgrade stars simplified; not a pixel-identical reproduction of source animation. No source account mutation performed.

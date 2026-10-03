@@ -1,0 +1,2 @@
+# ProfilePage
+Controller shares existing header/footer/home theme. Topmargin61 main16, tabsflexgap16,bottom16. Quay lại greybuttonradius50, mobile<=600 hides label. Hồ sơ/Thành tựu links pillpadding8px16 activebordertext. profile/edit renders distinct edit page with commonheader. Local useProfile hook stores settings; shared header subscribes same event and navigates /profile/activity. No backend/account/payment actions.

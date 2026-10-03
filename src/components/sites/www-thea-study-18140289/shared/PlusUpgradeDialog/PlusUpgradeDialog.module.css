@@ -1,0 +1,47 @@
+.dialog {
+  --plus-ink: #120537;
+  --plus-muted: #7e8189;
+  --plus-light: #eef1f9;
+  --plus-mid: #e6d9f2;
+  --plus-lavender: #cb9ce7;
+  --plus-overlay: #0008;
+  --plus-white: #fff;
+  width: 720px;
+  max-width: 80vw;
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--plus-light), var(--plus-mid) 60%, var(--plus-lavender));
+  color: var(--plus-ink);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.dialog::backdrop { background: var(--plus-overlay); }
+.close { position: absolute; right: 8px; top: 8px; width: 32px; height: 32px; border: 0; background: transparent; color: inherit; font-size: 24px; line-height: 1; }
+.content, .header, .purchase { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.header h2 { margin: 0; font-size: 24px; font-weight: 400; line-height: 1.5; text-align: center; }
+.logo { width: clamp(150px, 10vmax, 300px); height: auto; }
+.plans { display: flex; align-items: stretch; justify-content: center; gap: 16px; min-width: 0; max-width: 100%; margin: 0; padding: 0; border: 0; }
+.benefits { list-style: none; padding: 0; margin: 0; font-size: 18px; line-height: 1.5; }
+.benefits li { display: flex; gap: 8px; transition: transform .2s; }
+.benefits li:hover { transform: translateX(4px); }
+.benefits span { flex-shrink: 0; font-weight: 600; }
+.purchase { padding-top: 4px; }
+.terms { margin: 0; font-size: 10px; text-align: center; color: var(--plus-muted); }
+.terms a { text-decoration: underline; }
+.terms a:hover { color: var(--primary); }
+.demo { margin: 0; font-size: 12px; color: var(--plus-ink); text-align: center; }
+.notice { width: 100%; border-radius: 8px; background: var(--plus-light); padding: 16px; font-size: 14px; }
+.notice p { margin: 8px 0; }
+.notice button { padding: 8px 16px; border: 0; border-radius: 8px; color: var(--plus-white); background: var(--primary); }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 768px) { .dialog { max-width: calc(100vw - 32px); } }
+@media (max-width: 600px) {
+  .dialog { width: 100%; max-width: 100%; max-height: 100dvh; margin: auto 0 0; padding: 32px 8vw; border-radius: 12px 12px 0 0; }
+  .header h2 { font-size: 18px; }
+  .plans { flex-direction: column; align-items: stretch; min-height: 260px; }
+  .benefits { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .benefits li { transition: none; } .benefits li:hover { transform: none; } }

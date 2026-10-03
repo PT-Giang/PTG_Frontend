@@ -1,0 +1,1 @@
+.refresh-button{cursor:pointer;padding:var(--small-gap);font-size:18px;transition:opacity .2s}.refresh-button:hover,.refresh-button:focus-visible{color:var(--primary-hover)}.refresh-button.disabled{pointer-events:none}.refresh-button.disabled:hover{color:var(--text-color)}

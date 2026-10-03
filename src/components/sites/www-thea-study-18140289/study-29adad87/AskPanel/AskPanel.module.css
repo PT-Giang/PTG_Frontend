@@ -1,0 +1,5 @@
+.panel { max-width: 960px; padding: 16px 0; }.note { color: var(--text-secondary); font-size: 14px; }
+.messages { display: flex; flex-direction: column; gap: 16px; margin: 24px 0; }
+.answer { background: var(--dawn); padding: 16px; border-radius: 10px; overflow-wrap: anywhere; }.answer h3 { margin: 0 0 16px; font-size: 18px; }.answer blockquote { margin: 16px 0; border-left: 3px solid var(--primary); padding-left: 16px; }.answer cite { font-size: 13px; color: var(--text-secondary); }
+.form { display: flex; gap: 8px; }.form input { width: 100%; min-width: 0; padding: 12px 16px; border: 1px solid var(--tab-active); border-radius: 24px; background: var(--background); color: inherit; }.form button { border: 0; border-radius: 24px; padding: 8px 24px; color: var(--surface); background: var(--primary); }.form button:disabled { opacity: .5; cursor: not-allowed; }
+.clear { border: 0; background: transparent; color: var(--primary); margin-top: 16px; }

@@ -1,0 +1,11 @@
+.root { max-width: 960px; margin: 0 auto; padding: 0 16px 32px; }
+.root h1, .root h2 { font-size: 24px; }
+.root h2 { margin-top: 32px; }
+.score { font-size: 32px; font-weight: 700; color: var(--primary); margin: 16px 0; }
+.back { border: 0; background: var(--primary); color: var(--surface); padding: 8px 16px; border-radius: 50px; cursor: pointer; }
+.review { padding-left: 24px; }
+.review li { padding: 16px; background: var(--dawn); border-radius: 10px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.review h3 { font-size: 18px; margin: 0 0 16px; }
+.review p { margin: 8px 0; }
+.expected { font-weight: 600; }
+@media (max-width: 768px) { .root { padding: 0 0 24px; } }

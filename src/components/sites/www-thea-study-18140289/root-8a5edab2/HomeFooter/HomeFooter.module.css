@@ -1,0 +1,8 @@
+.footer { min-height: 36px; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--dawn); position: relative; font-size: 14px; }
+.footer nav { display: flex; gap: 28px; align-items: center; }
+.footer small { position: absolute; right: 8px; font-size: 14px; }
+.short { display: none; }
+.footer a:hover { color: var(--primary); }
+@media(max-width:850px) { .footer { justify-content: space-between; padding: 0 16px; }.footer small { position: static; }.footer nav { gap: 20px; } }
+@media(max-width:600px) { .footer nav>span,.full { display: none; }.short { display: inline; } }
+@media(min-width:601px) and (max-width:991px) { .footer { justify-content: center; }.footer small { position: absolute; right: 8px; }.full { display: none; }.short { display: inline; } }

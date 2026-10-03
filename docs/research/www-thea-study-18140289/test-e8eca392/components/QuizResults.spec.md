@@ -1,0 +1,2 @@
+# QuizResults
+Local adaptation split from QuizView spec. Show correct count/total,date,duration,review each question and user's answer; incorrect answers reveal expected answer. Snapshot data independent of term edits/deletes. Back to settings/history. Inherit tokens, wrapping text, semantic list/headings; no assets. Actual source results unobserved because generating source quiz would mutate account.

@@ -1,0 +1,7 @@
+.container { width:100%; min-width:0; }
+.tabs { display:flex; justify-content:center; gap:32px; border-bottom:1px solid var(--dawn); margin-bottom:24px; }
+.tabs a { padding:12px 8px; color:var(--text-primary); border-bottom:3px solid transparent; }
+.tabs a[aria-current] { color:var(--primary); border-color:var(--primary); }
+.empty { text-align:center; padding:64px 16px; }
+.empty a { color:var(--primary); text-decoration:underline; }
+@media(max-width:800px) { .tabs { gap:8px; } }

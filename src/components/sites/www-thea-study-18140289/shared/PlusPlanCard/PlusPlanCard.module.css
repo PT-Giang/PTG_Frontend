@@ -1,0 +1,123 @@
+.card {
+  --plan-background: #eef1f9;
+  --plan-header: #e4e8f3;
+  --plan-border: #eee;
+  --plan-primary: #028ee1;
+  --plan-secondary: #7e8189;
+  --plan-white: #fff;
+  --plan-saving-start: #39cb3f;
+  --plan-saving-end: #2d9c3c;
+  --plan-shadow: rgba(0, 0, 0, .15);
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 250px;
+  min-width: 240px;
+  min-height: 165px;
+  border: 2px solid var(--plan-border);
+  border-radius: 10px;
+  background: var(--plan-background);
+  cursor: pointer;
+  transition: transform 300ms, box-shadow 300ms, border-color 300ms;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px var(--plan-shadow);
+}
+
+.selected { border-color: var(--plan-primary); }
+
+.card:has(.radio:focus-visible) {
+  outline: 3px solid var(--plan-primary);
+  outline-offset: 4px;
+}
+
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  background: var(--plan-header);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.savings {
+  padding: 4px 8px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--plan-saving-start), var(--plan-saving-end));
+  color: var(--plan-white);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+}
+
+.priceLine {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price {
+  font-size: 32px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cadence { font-size: 16px; }
+
+.billing {
+  color: var(--plan-secondary);
+  font-size: 16px;
+}
+
+.check {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--plan-primary);
+  color: var(--plan-white);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .card { flex: initial; width: 260px; max-width: 100%; min-height: 0; }
+  .header { gap: 16px; padding: 8px; }
+  .content { padding: 8px; }
+  .price { font-size: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}

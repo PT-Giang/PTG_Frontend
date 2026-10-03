@@ -1,0 +1,9 @@
+.content { margin: 61px 0 0 200px; min-height: calc(100dvh - 61px); display: flex; flex-direction: column; }
+.collapsed { margin-left: 64px; }
+.main { flex: 1; padding: 16px; min-width: 0; }
+.empty { text-align: center; padding: 64px 16px; }
+.empty h1 { font-size: 24px; }
+.empty a { display: inline-block; margin: 16px; color: var(--primary); }
+.empty button,.error button { border: 1px solid var(--primary); border-radius: 24px; padding: 8px 16px; background: transparent; color: var(--primary); margin-right: 8px; }
+.error { padding: 8px 16px; border: 1px solid var(--danger); border-radius: 10px; margin-bottom: 16px; }
+@media(max-width:800px) and (min-height:450px) { .content,.collapsed { margin-left: 0; padding-bottom: 64px; } }

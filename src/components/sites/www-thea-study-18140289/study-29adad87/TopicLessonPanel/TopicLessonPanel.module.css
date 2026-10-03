@@ -1,0 +1,5 @@
+.panel label { display: block; margin: 12px 0 8px; font-weight: 700; }.panel textarea { width: 100%; padding: 12px; border: 1px solid var(--tab-active); border-radius: 10px; resize: vertical; background: var(--background); color: inherit; }
+.badge { display: inline-block; font-size: 12px; padding: 4px 8px; border: 1px solid var(--primary); color: var(--primary); border-radius: 16px; }
+.hint { font-size: 13px; color: var(--text-secondary); }.suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }.suggestions button { border: 1px solid var(--tab-active); border-radius: 16px; padding: 4px 8px; background: var(--background); color: inherit; font-size: 12px; }
+.generate { border: 0; border-radius: 24px; padding: 8px 16px; background: var(--primary); color: var(--surface); }.generate:disabled { opacity: .5; cursor: not-allowed; }
+.result { margin-top: 16px; padding: 16px; border: 1px solid var(--primary); border-radius: 10px; background: var(--background); font-size: 14px; }.result p { margin: 8px 0; }.result ul { padding-left: 20px; }.error { color: var(--danger); }

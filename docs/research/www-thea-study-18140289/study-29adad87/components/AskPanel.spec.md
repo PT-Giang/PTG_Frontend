@@ -1,0 +1,2 @@
+# AskPanel
+Local click/submit adaptation of source Ask tab. Render keyword-ranked verbatim passages with document title, no AI claims. Empty/unmatched states explicit. Max960px, dawn answer cards padding16 radius10, primary left quote border3; input flexible rounded24. Inherit font/tokens. Clear conversation affects only current transient thread. Small-screen input shrinks without overflow. Service findPassages owns ranking. No new assets.

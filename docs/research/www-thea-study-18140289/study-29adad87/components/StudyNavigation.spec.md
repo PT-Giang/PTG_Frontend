@@ -1,0 +1,2 @@
+# StudyNavigation
+Extracted layout and assets as StudyShell.spec.md. Sidebar200px, collapsed64px, fixed below61px header. Home/documents/smart/guide/cards/quiz links use original SVG26px and inherited16px font. Click collapses; hover translateY(-4px) .2s with reduced-motion override. Below800px and height450+, bottom64px bar reserves content space; 24px icons,10px text, source mobile order documents/guide/smart/cards/quiz. Active primary border. This component was split from shell spec.
