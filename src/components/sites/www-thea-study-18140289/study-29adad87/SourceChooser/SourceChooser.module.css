@@ -1,0 +1,12 @@
+.root { padding-bottom: 24px; }
+.grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 15px; padding: 0; margin: 0; list-style: none; }
+.tile { position: relative; width: 100%; height: 208px; border: 1.6px solid var(--night); border-radius: 10px; padding: 10px; background: var(--background); color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background .15s; }
+.tile:hover { background: var(--dawn); }
+.icon,.brandIcon { font-family: TheaRegular; font-size: 48px; line-height: 1; display: block; width: 75px; padding-top: 22px; }
+.brandIcon { font-family: TheaBrands; }
+.text { display: flex; flex-direction: column; }
+.title { font-size: 20px; line-height: 30px; font-weight: 400; }
+.description { font-size: 12.8px; line-height: 19.2px; }
+.badge { position: absolute; top: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.2px; line-height: 16.8px; padding: 4px; background: var(--night); color: var(--dawn); border-radius: 0 0 10px 10px; }
+.more { width: 100%; border: 1px solid var(--night); border-radius: 24px; color: inherit; background: transparent; margin-top: 8px; padding: 4px 16px; }
+@media(max-width:600px) { .grid { grid-template-columns: minmax(0,320px); justify-content: center; }.tile { height: 128px; flex-direction: row; justify-content: flex-start; padding: 10px 24px; gap: 8px; text-align: left; }.icon,.brandIcon { width: 50px; flex-shrink: 0; font-size: 40px; padding-top: 0; } }

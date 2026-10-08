@@ -1,0 +1,6 @@
+# Class controls — 2026-10-04
+
+Update existing / homepage and /study/:id metadata in place. React/Vite, INS retained; no backend.
+Live source: class heading is button, clicking it or adjacent pencil opens inline input with Lưu and Hủy. No collapsing. Heading24px bold; actions pencil,palette,user-plus; unclassified heading Chưa phân loại has no actions. Cards use shared class color. Source palette #8ccdf3,#0075ff,#2d9c3c,#ff821a,#ff3232,#cb9ce7,#c804a4,#9e1bbe,#6200b3,#3b3a6d. Picker modal centered background#eef1f9 radius8 heading24, 10 circularswatches2rows5 plus customcolorandhex, Hủy/Chọn. Move opens searchable class options, hint Bắt đầu gõ để tạo lớp học mới. Class names click-to-edit, not accordion. Share modal link gives separate copy; local build must label browser-only link honestly.
+
+Local backward compatibility: preserve material IDs, workspaces, className; add optional createdAt,classColor. Rename all class members, including deleted ones; prevent name collisions. Changes saved atomically in same material array. Keep existing routes. New source chooser triggered once by router state after immediate kit creation. Existing unknown dates grouped Trước đây instead of fictional Hôm nay.

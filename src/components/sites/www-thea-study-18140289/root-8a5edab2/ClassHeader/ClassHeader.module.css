@@ -1,0 +1,8 @@
+.header { display: flex; align-items: center; gap: 8px; padding: 4px 8px; min-height: 42px; margin-bottom: 8px; }
+.header h2 { margin: 0 4px 0 0; font-size: 24px; line-height: 1.2; min-width: 0; }
+.header button { background: transparent; border: 0; color: inherit; padding: 0; font-size: 24px; line-height: 1.2; }
+.header h2 button { font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+.header form { display: flex; gap: 8px; min-width: 0; }
+.header input { width: 240px; max-width: calc(100vw - 120px); background: var(--surface); border: 1px solid var(--primary); color: inherit; border-radius: 4px; padding: 0 4px; font-size: 24px; font-weight: 700; }
+.palette { font-family: TheaSolid; }
+@media(max-width:600px) { .header h2,.header button,.header input { font-size: 18px; }.header { min-height: 35px; } }

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+import ClassPicker from "../../root-8a5edab2/ClassPicker/ClassPicker";
 import type { StudyDocument, StudyViewProps } from "@/study/types";
 import type { StudyMaterial } from "../../root-8a5edab2/types";
 import { exampleContent, extractTerms, mergeTerms } from "@/study/content";
@@ -12,12 +13,14 @@ import styles from "./DocumentsView.module.css";
 interface DocumentsViewProps extends StudyViewProps { material: StudyMaterial; onMaterialChange(material: StudyMaterial): void }
 
 export default function DocumentsView({ material, onMaterialChange, workspace, onChange, materialId }: DocumentsViewProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("documents");
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useState(() => location.state?.openImport === true);
+  useEffect(() => { if (location.state?.openImport) navigate(location.pathname + location.search, { replace: true, state: null }); }, [location.pathname, location.search, location.state, navigate]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(material.title);
   const [editingClass, setEditingClass] = useState(false);
-  const [className, setClassName] = useState(material.className);
   const [opened, setOpened] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
@@ -36,7 +39,7 @@ export default function DocumentsView({ material, onMaterialChange, workspace, o
       <span className={styles.emoji} aria-hidden="true">📚</span>
       <div className={styles.information}>
         {editingTitle ? <form className={styles.editForm} onSubmit={event => { event.preventDefault(); if (!title.trim()) return; onMaterialChange({ ...material, title: title.trim() }); setEditingTitle(false); }}><input autoFocus aria-label="Tên bộ học liệu" maxLength={120} required value={title} onChange={event => setTitle(event.target.value)} /><button type="submit">Lưu</button><button type="button" onClick={() => setEditingTitle(false)}>Hủy</button></form> : <button type="button" className={styles.title} onClick={() => { setTitle(material.title); setEditingTitle(true); }}><h1>{material.title}</h1><HomeIcon name="edit" /></button>}
-        {editingClass ? <form className={styles.editForm} onSubmit={event => { event.preventDefault(); onMaterialChange({ ...material, className: className.trim() }); setEditingClass(false); }}><input autoFocus aria-label="Lớp" maxLength={80} value={className} onChange={event => setClassName(event.target.value)} /><button type="submit">Lưu</button><button type="button" onClick={() => setEditingClass(false)}>Hủy</button></form> : <button type="button" className={styles.className} onClick={() => { setClassName(material.className); setEditingClass(true); }}><HomeIcon name="folder" />{material.className || "Chọn một lớp cho bộ học liệu của bạn"}<HomeIcon name="edit" /></button>}
+        <button type="button" className={styles.className} onClick={() => setEditingClass(true)}><HomeIcon name="folder" />{material.className || "Chọn một lớp cho bộ học liệu của bạn"}<HomeIcon name="edit" /></button>
         <span className={styles.language}><HomeIcon name="language" /> Mặc định</span>
       </div>
     </div>
@@ -52,6 +55,8 @@ export default function DocumentsView({ material, onMaterialChange, workspace, o
       {!!workspace.documents.length && <p className={styles.localNote}>Đã lưu trên trình duyệt này. <button type="button" onClick={() => downloadText(`${material.title}.json`, JSON.stringify({ material, workspace }, null, 2), "application/json")}>Tải bản sao lưu</button></p>}
     </div> : <div id="ask-panel" role="tabpanel" aria-labelledby="ask-tab"><AskPanel documents={workspace.documents} /></div>}
     {notice && <p role="status" className={styles.notice}>{notice}<button type="button" aria-label="Đóng thông báo" onClick={() => setNotice("")}>×</button></p>}
+    {editingClass && <ClassPicker value={material.className} onSelect={name => onMaterialChange({ ...material, className: name, classColor: undefined })} onClose={() => setEditingClass(false)} />}
     {importing && <ImportDialog onClose={() => setImporting(false)} onAdd={addDocument} />}
   </section>;
 }
+

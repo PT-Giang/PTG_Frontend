@@ -12,7 +12,7 @@ const temporary = await mkdtemp(path.join(tmpdir(), "thea-study-tests-"));
 const require = createRequire(import.meta.url);
 const services = {};
 try {
-  for (const name of ["content", "quiz", "repository", "topicLessons", "importDocument"]) {
+  for (const name of ["content", "quiz", "repository", "topicLessons", "importDocument", "materialGroups"]) {
     const source = await readFile(path.join(project, "src", "study", `${name}.ts`), "utf8");
     const compiled = ts.transpileModule(source, {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -212,4 +212,30 @@ test("oversized files reject before reading bytes or loading PDF/DOCX parsers", 
     const file = new OversizedFile([new Uint8Array(10 * 1024 * 1024 + 1)], `oversized.${extension}`);
     await assert.rejects(importDocument(file), /10 MB/);
   }
+});
+
+const material = (id, className = "", extra = {}) => ({ id, title: id, className, deleted: false, ...extra });
+test("class rename updates all members including deleted without changing IDs or content", () => {
+  const original = [material("one", "React"), material("two", "React", { deleted: true }), material("three", "BA")];
+  const renamed = services.materialGroups.renameClass(original, "React", "Frontend");
+  assert.deepEqual(renamed.map(item => item.className), ["Frontend", "Frontend", "BA"]);
+  assert.deepEqual(renamed.map(item => item.id), ["one", "two", "three"]);
+  assert.equal(renamed[1].deleted, true);
+  assert.equal(original[0].className, "React");
+  assert.throws(() => services.materialGroups.renameClass(original, "React", "ba"));
+  assert.throws(() => services.materialGroups.renameClass(original, "React", " "));
+});
+test("class grouping separates unclassified from identically named real class", () => {
+  const groups = services.materialGroups.groupMaterials([material("one"), material("two", "Chưa phân loại")], "Lớp");
+  assert.equal(groups.length, 2);
+  assert.notEqual(groups[0].key, groups[1].key);
+  assert.equal(groups[1].items[0].id, "one");
+});
+test("legacy and invalid dates are not mislabeled as today; color values are validated", () => {
+  const materials = [material("old"), material("bad", "", { createdAt: "invalid" }), material("new", "React", { createdAt: "2026-10-04T12:00:00" })];
+  const groups = services.materialGroups.groupMaterials(materials, "Ngày", new Date("2026-10-04T16:00:00"));
+  assert.deepEqual(groups.find(group => group.name === "Trước đây").items.map(item => item.id), ["old", "bad"]);
+  assert.equal(groups.find(group => group.name === "Hôm nay").items[0].id, "new");
+  assert.equal(services.materialGroups.colorForClass([material("one", "React", { classColor: "invalid" })], "React"), "#0075ff");
+  assert.equal(services.materialGroups.colorForClass([material("one", "React", { classColor: "#cb9ce7" })], "React"), "#cb9ce7");
 });

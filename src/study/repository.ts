@@ -4,6 +4,12 @@ import type { StudyWorkspace } from "./types";
 export const materialStorageKey = "thea-home-demo-v1";
 const workspaceKey = (id: string) => `thea-study-v1:${id}`;
 
+export function readClassNames(): string[] {
+  const parsed: unknown = JSON.parse(localStorage.getItem(materialStorageKey) || "[]");
+  if (!Array.isArray(parsed)) throw new Error("Không thể đọc danh sách lớp.");
+  return [...new Set(parsed.flatMap(item => item && typeof item.className === "string" && item.className ? [item.className as string] : []))].sort((left, right) => left.localeCompare(right, "vi"));
+}
+
 export function emptyWorkspace(): StudyWorkspace {
   return { documents: [], terms: [], attempts: [], smartAnswered: 0, smartCorrect: 0, guide: "" };
 }

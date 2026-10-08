@@ -1,3 +1,5 @@
+> **Bản tham chiếu ban đầu. Phương án hiện hành:** [Plan 22 bảng](./INS-POSTGRESQL-22-TABLE-PLAN.md), chỉ gộp plan_features và message_citations, giữ các bảng khác và bổ sung material_shares cho chia sẻ. Xem [ERD đã cập nhật](./erd.md).
+
 # INS — Bản thiết kế database PostgreSQL và kế hoạch triển khai
 
 **Trạng thái:** Bản đề xuất, chờ duyệt.  
@@ -54,29 +56,29 @@ Môi trường local dự kiến sử dụng Docker Compose với PostgreSQL và
 
 Thiết kế gồm **26 bảng nghiệp vụ**, chia thành sáu nhóm. Các bảng kỹ thuật quản lý migration, nếu có, không tính trong 26 bảng này.
 
-### A. Tài khoản và hồ sơ — 3 bảng
+### A. Tài khoản và hồ sơ — 1 bảng
 
 | Bảng | Dữ liệu chính | Vai trò |
 |---|---|---|
-| `users` | ID, email, tên hiển thị, trạng thái, thời gian tạo/sửa | Tài khoản |
-| `user_profiles` | Người dùng, ảnh đại diện, ngôn ngữ, trường, bậc học, lớp, vai trò học tập, múi giờ, mã hỗ trợ | Hồ sơ |
-| `auth_identities` | Người dùng, nhà cung cấp đăng nhập, mã định danh, mật khẩu băm nếu có | Phương thức đăng nhập |
+| `users` | ID, email, mật khẩu (hash), tên hiển thị, trạng thái, level
+ thời gian tạo/sửa | Tài khoản và hồ sơ |
+
+
 
 **Quy tắc:**
 
 - Email không trùng, không phân biệt chữ hoa/thường sau khi chuẩn hóa.
-- Một người có thể có nhiều phương thức đăng nhập.
+- Một người có thể có một phương thức đăng nhập.
 - Thông tin “giáo viên/sinh viên” trong hồ sơ không tự cấp quyền quản trị.
 - Tài khoản mẫu dùng danh tính giả lập, không seed mật khẩu thật.
 - Khi hỗ trợ mật khẩu, chỉ lưu giá trị băm, không lưu mật khẩu gốc.
 
-### B. Thư viện và tài liệu — 4 bảng
+### B. Thư viện và tài liệu — 3 bảng
 
 | Bảng | Dữ liệu chính | Vai trò |
 |---|---|---|
 | `classes` | ID, chủ sở hữu, tên lớp/môn | Nhóm học liệu |
 | `study_materials` | ID, chủ sở hữu, lớp/môn, tiêu đề, thời gian tạo/sửa/xóa | Bộ học liệu trung tâm |
-| `material_members` | Bộ học liệu, người được chia sẻ, thời gian cấp quyền | Quyền đọc |
 | `documents` | Bộ học liệu, yêu cầu sinh nội dung nếu có, tên tài liệu, loại nguồn, văn bản trích xuất, đường dẫn file/URL, trạng thái xử lý, thông tin lỗi | Tài liệu nguồn |
 
 Ví dụ:
@@ -331,3 +333,4 @@ Các đường dẫn trên mô tả sản phẩm dự kiến, không xác nhận
 - [ ] PostgreSQL + pgAdmin local; kết nối backend/frontend ở đợt tiếp theo.
 
 **Chỉ triển khai sau khi người dùng duyệt phương án.**
+

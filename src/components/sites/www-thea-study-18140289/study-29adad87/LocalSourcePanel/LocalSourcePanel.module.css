@@ -1,0 +1,4 @@
+.root p { font-size: 14px; color: var(--text-secondary); }
+.root h3 { font-size: 16px; margin: 16px 0 8px; }
+.root button { width: 100%; display: flex; justify-content: space-between; gap: 16px; padding: 12px; margin-bottom: 8px; text-align: left; background: var(--background); color: inherit; border: 1px solid var(--tab-active); border-radius: 8px; }
+.root button span { color: var(--primary); flex-shrink: 0; }

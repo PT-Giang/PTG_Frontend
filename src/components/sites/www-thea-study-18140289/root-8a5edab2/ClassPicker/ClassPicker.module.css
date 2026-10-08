@@ -1,0 +1,11 @@
+.dialog { width: 440px; max-width: calc(100% - 32px); max-height: calc(100dvh - 32px); padding: 16px; border: 0; border-radius: 8px; color: var(--text-primary); background: var(--background); }
+.dialog::backdrop { background: var(--tab-shadow); backdrop-filter: brightness(.6); }
+.header { display: flex; align-items: start; gap: 16px; margin-bottom: 16px; }
+.header h2 { margin: 0; flex: 1; font-size: 20px; font-weight: 400; }
+.header button { background: transparent; color: inherit; border: 0; }
+.search { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--surface); }
+.search input { flex: 1; min-width: 0; background: transparent; color: inherit; border: 0; font-size: 14px; }
+.options { display: flex; flex-direction: column; margin-top: 8px; max-height: 320px; overflow: auto; }
+.options button { display: flex; justify-content: space-between; gap: 8px; text-align: left; overflow-wrap: anywhere; border: 0; color: inherit; background: transparent; padding: 12px; border-radius: 8px; }
+.options button:hover,.options button[aria-pressed=true] { background: var(--dawn); }
+.options .create { color: var(--primary); }
