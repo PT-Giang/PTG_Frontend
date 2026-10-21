@@ -1,5 +1,3 @@
-> **Bản tham chiếu ban đầu. Phương án hiện hành:** [Plan 22 bảng](./INS-POSTGRESQL-22-TABLE-PLAN.md), chỉ gộp plan_features và message_citations, giữ các bảng khác và bổ sung material_shares cho chia sẻ. Xem [ERD đã cập nhật](./erd.md).
-
 # INS — Bản thiết kế database PostgreSQL và kế hoạch triển khai
 
 **Trạng thái:** Bản đề xuất, chờ duyệt.  
@@ -158,17 +156,16 @@ Hôm nay người dùng làm câu hỏi có đáp án A. Ngày mai chủ học l
 
 Người được chia sẻ học liệu không mặc nhiên được xem hội thoại của người khác. Câu trả lời trích xuất cục bộ được phân biệt với câu trả lời do AI tạo.
 
-### F. Gói dịch vụ — 3 bảng
+### F. Gói dịch vụ — 2 bảng
 
 | Bảng | Dữ liệu chính | Vai trò |
 |---|---|---|
-| `plans` | Mã gói, tên, chu kỳ, giá, tiền tệ, đánh dấu demo | Free/Plus |
-| `plan_features` | Gói, chức năng, cho phép hay không, hạn mức | Quyền lợi |
+| `plans` | Mã gói, tên, chu kỳ, giá, tiền tệ, đánh dấu demo,chức năng, cho phép hay không, hạn mức | Free/Plus |
 | `subscriptions` | Người dùng, gói, thời hạn, trạng thái, đánh dấu giả lập | Đăng ký gói |
 
 Người dùng không có đăng ký Plus còn hiệu lực được áp dụng Free. Giá và quyền lợi trong dữ liệu mẫu là thông số demo, chưa phải chính sách kinh doanh chính thức.
 
-Chưa thiết kế giao dịch, hóa đơn và webhook thanh toán trong đợt đầu. Các phần này sẽ được bổ sung khi chọn cổng thanh toán.
+Chưa thiết kế giao dịch, hóa đơn và webhook thanh toán tr   ong đợt đầu. Các phần này sẽ được bổ sung khi chọn cổng thanh toán.
 
 ## 5. Quan hệ chính
 
@@ -333,4 +330,3 @@ Các đường dẫn trên mô tả sản phẩm dự kiến, không xác nhận
 - [ ] PostgreSQL + pgAdmin local; kết nối backend/frontend ở đợt tiếp theo.
 
 **Chỉ triển khai sau khi người dùng duyệt phương án.**
-

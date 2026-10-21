@@ -8,14 +8,13 @@ import StudyCard from "../StudyCard/StudyCard";
 import ClassHeader from "../ClassHeader/ClassHeader";
 import ClassPicker from "../ClassPicker/ClassPicker";
 import ClassColorDialog from "../ClassColorDialog/ClassColorDialog";
-import { colorForClass, groupMaterials, renameClass, validMaterials } from "@/study/materialGroups";
+import { colorForClass, groupMaterials, renameClass } from "@/study/materialGroups";
+import { studyApi } from "@/study/studyApi";
 import type { DialogState, GroupMode, StudyMaterial } from "../types";
 import styles from "./HomeDashboard.module.css";
-const storageKey = "thea-home-demo-v1";
-const initialMaterials: StudyMaterial[] = [1,2].map(id => ({id: `demo-${id}`, title: "Chưa có tiêu đề", className: "", deleted: false}));
 export default function HomeDashboard() {
   const navigate = useNavigate();
-  const [materials, setMaterials] = useState(initialMaterials);
+  const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<GroupMode>("Ngày");
@@ -28,31 +27,53 @@ export default function HomeDashboard() {
   const groupRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
+    let active = true;
     try {
-      let loaded = initialMaterials;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) { const parsed: unknown = JSON.parse(saved); if (!validMaterials(parsed)) throw new Error("Invalid materials"); loaded = parsed; setMaterials(parsed); }
-      else localStorage.setItem(storageKey, JSON.stringify(initialMaterials));
       const preference = localStorage.getItem("ins-home-group");
       if (preference === "Ngày" || preference === "Lớp" || preference === "Không nhóm") setGroup(preference);
       const linkedClass = new URLSearchParams(window.location.search).get("class");
       if (linkedClass) { setQuery(linkedClass); setGroup("Lớp"); }
-      const materialId = new URLSearchParams(window.location.search).get("material");
-      const linkedMaterial = loaded.find(item => item.id === materialId && !item.deleted);
-      if (linkedMaterial) navigate(`/study/${encodeURIComponent(linkedMaterial.id)}`, { replace: true });
-      else if (materialId) setStatus("Bộ học liệu demo này không có trong trình duyệt hiện tại.");
-    } catch { setStatus("Không đọc được dữ liệu đã lưu. Dữ liệu gốc được giữ nguyên; hãy kiểm tra bộ nhớ trình duyệt rồi tải lại trang."); return; }
-    setReady(true);
-  }, []);
+    } catch { setStatus("Không đọc được tùy chọn hiển thị đã lưu."); }
+    async function loadMaterials() {
+      try {
+        const page = await studyApi.listMaterials();
+        if (!active) return;
+        const loaded = page.data.map(item => ({
+          id: item.id,
+          title: item.title,
+          className: item.className || "",
+          deleted: false,
+          createdAt: item.createdAt,
+        }));
+        setMaterials(loaded);
+        const materialId = new URLSearchParams(window.location.search).get("material");
+        const linkedMaterial = loaded.find(item => item.id === materialId);
+        if (linkedMaterial) navigate(`/study/${encodeURIComponent(linkedMaterial.id)}`, { replace: true });
+        else if (materialId) setStatus("Không tìm thấy bộ học liệu trong tài khoản này.");
+      } catch (error) {
+        if (active) setStatus(error instanceof Error ? error.message : "Không tải được bộ học liệu từ Backend.");
+      } finally {
+        if (active) setReady(true);
+      }
+    }
+    void loadMaterials();
+    return () => { active = false; };
+  }, [navigate]);
   function persist(next: StudyMaterial[]) {
     if (!ready) { setStatus("Chưa thể lưu khi danh sách học liệu chưa được tải thành công."); return false; }
-    try { localStorage.setItem(storageKey, JSON.stringify(next)); setMaterials(next); return true; }
-    catch { setStatus("Chưa lưu được thay đổi. Hãy kiểm tra dung lượng và quyền lưu của trình duyệt rồi thử lại."); return false; }
+    setMaterials(next);
+    return true;
   }
   function changeGroup(next: GroupMode) { setGroup(next); setGroupOpen(false); try { localStorage.setItem("ins-home-group", next); } catch { setStatus("Chưa lưu được cách phân nhóm."); } }
-  function createMaterial() {
-    const created: StudyMaterial = { id: crypto.randomUUID(), title: "Chưa có tiêu đề", className: "", deleted: false, createdAt: new Date().toISOString() };
-    if (persist([created, ...materials])) navigate(`/study/${created.id}`, { state: { openImport: true } });
+  async function createMaterial() {
+    if (!ready) { setStatus("Danh sách học liệu đang tải. Hãy thử lại sau."); return; }
+    try {
+      const saved = await studyApi.createMaterial("Chưa có tiêu đề");
+      const created: StudyMaterial = { id: saved.id, title: saved.title, className: saved.className || "", deleted: false, createdAt: saved.createdAt };
+      if (persist([created, ...materials])) navigate(`/study/${created.id}`, { state: { openImport: true } });
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Không tạo được bộ học liệu. Hãy thử lại.");
+    }
   }
   useEffect(() => {
     function outside(event: PointerEvent) { if (!groupRef.current?.contains(event.target as Node)) setGroupOpen(false); }
@@ -65,10 +86,30 @@ export default function HomeDashboard() {
     if (type === "preview" && material && !material.deleted) { navigate(`/study/${encodeURIComponent(material.id)}`); return; }
     if (type === "restore") {if (persist(materials.map(item => item.id === material?.id ? {...item,deleted:false} : item))) setStatus("Đã khôi phục bộ học liệu.");} else setDialog({type,material});
   }
-  function save(value: string) {
+  async function save(value: string) {
     if (!dialog) return;
-    if (!persist(materials.map(item => item.id !== dialog.material?.id ? item : dialog.type === "delete" ? {...item,deleted:true} : dialog.type === "move" ? {...item,className:value,classColor:colorForClass(materials,value)} : {...item,title:value || "Chưa có tiêu đề"}))) return;
-    setDialog(null);
+    try {
+      let next: StudyMaterial[];
+      if (dialog.type === "delete" && dialog.material) {
+        await studyApi.deleteMaterial(dialog.material.id);
+        next = materials.filter(item => item.id !== dialog.material?.id);
+      } else if (dialog.type === "move" && dialog.material) {
+        const classes = await studyApi.listClasses();
+        const selected = value ? classes.find(item => item.name.toLocaleLowerCase("vi") === value.toLocaleLowerCase("vi")) || await studyApi.createClass(value) : null;
+        await studyApi.updateMaterial(dialog.material.id, selected ? { classId: selected.id } : { clearClass: true });
+        next = materials.map(item => item.id === dialog.material?.id ? { ...item, className: selected?.name || "", classColor: colorForClass(materials, selected?.name || "") } : item);
+      } else if (dialog.type === "rename" && dialog.material) {
+        const title = value || "Chưa có tiêu đề";
+        await studyApi.updateMaterial(dialog.material.id, { title });
+        next = materials.map(item => item.id === dialog.material?.id ? { ...item, title } : item);
+      } else {
+        setDialog(null);
+        return;
+      }
+      if (persist(next)) setDialog(null);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Không lưu được thay đổi. Hãy thử lại.");
+    }
   }
   const normalizedQuery = query.trim().toLocaleLowerCase("vi");
   const visible = materials.filter(item => (showDeleted || !item.deleted) && `${item.title} ${item.className}`.toLocaleLowerCase("vi").includes(normalizedQuery));

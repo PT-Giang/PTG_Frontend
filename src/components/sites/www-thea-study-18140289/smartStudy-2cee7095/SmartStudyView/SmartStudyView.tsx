@@ -6,13 +6,18 @@ import SmartStudySettings, { type SmartStudyPreferences } from "../SmartStudySet
 import SmartProgress from "../SmartProgress/SmartProgress";
 import StudyModal from "../StudyModal/StudyModal";
 import SmartMatching from "../SmartMatching/SmartMatching";
+import PlusUpgradeDialog from "../../shared/PlusUpgradeDialog/PlusUpgradeDialog";
+import { studyApi } from "@/study/studyApi";
+import type { StudyQuestion } from "@/study/studyApi";
+import type { QuizQuestion, StudyTerm } from "@/study/types";
 import styles from "./SmartStudyView.module.css";
 
 type ResponseKind = "correct" | "incorrect" | "revealed" | "skipped";
 interface HistoryEntry { prompt: string; answer: string; selected: string; result: ResponseKind }
+interface ActiveQuestion extends QuizQuestion { matchingTerms?: StudyTerm[]; hint?: string; coreKnowledge?: string }
 const resultLabels: Record<ResponseKind, string> = { correct: "Đúng", incorrect: "Chưa chính xác", revealed: "Đã xem đáp án", skipped: "Đã bỏ qua" };
 
-export default function SmartStudyView({ materialId, title, workspace, onChange }: StudyViewProps) {
+export default function SmartStudyView({ materialId, title, workspace, studyContent, onRefreshStudyContent, onChange }: StudyViewProps) {
   const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -21,21 +26,27 @@ export default function SmartStudyView({ materialId, title, workspace, onChange 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rating, setRating] = useState<"positive" | "negative" | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState("");
+  const [showPlus, setShowPlus] = useState(false);
   const [preferences, setPreferences] = useState<SmartStudyPreferences>({ difficulty: "auto", type: "choice", directions: "" });
   const responseLocked = useRef(false);
-  const questions = useMemo(() => {
-    void round;
+  const generatedQuestions = useMemo(() => studyContent?.studyQuestionSets.flatMap(set => set.questions.map((item, index) => mapStudyQuestion(item, set.id, index))) ?? [], [studyContent?.studyQuestionSets]);
+  const questions = useMemo<ActiveQuestion[]>(() => {
+    if (generatedQuestions.length) return generatedQuestions;
     const count = Math.min(workspace.terms.length, 10);
     if (preferences.type === "short") return generateQuiz(workspace.terms, 0, count);
     const choiceCount = preferences.type === "all" ? Math.ceil(count / 2) : count;
     const generated = generateQuiz(workspace.terms, choiceCount, count - choiceCount);
     return generated.length ? generated : generateQuiz(workspace.terms, 0, count);
-  }, [workspace.terms, round, preferences.type]);
+  }, [generatedQuestions, workspace.terms, round, preferences.type]);
   const matchingTerms = useMemo(() => workspace.terms.filter((term, position, terms) => terms.findIndex(item => item.definition === term.definition) === position).slice(0, 5), [workspace.terms]);
-  const hasMatching = preferences.type === "all" && matchingTerms.length > 1;
-  const isMatching = hasMatching && index === 0;
-  const question = isMatching ? { id: "matching", prompt: "Nối mỗi khái niệm với định nghĩa tương ứng của nó.", answer: matchingTerms.map(term => `${term.term}: ${term.definition}`).join("; "), options: [], type: "choice" as const } : questions[index - (hasMatching ? 1 : 0)];
-  const totalQuestions = questions.length + (hasMatching ? 1 : 0);
+  const question = questions[index];
+  const questionMatchingTerms = question?.matchingTerms;
+  const hasMatching = Boolean(questionMatchingTerms?.length) || (!generatedQuestions.length && preferences.type === "all" && matchingTerms.length > 1 && index === 0);
+  const isMatching = hasMatching;
+  const activeMatchingTerms = questionMatchingTerms?.length ? questionMatchingTerms : matchingTerms;
+  const totalQuestions = questions.length;
   const currentTerm = workspace.terms.find(term => term.id === question?.id);
   const sourceDocument = workspace.documents.find(document => document.id === currentTerm?.documentId);
 
@@ -55,13 +66,34 @@ export default function SmartStudyView({ materialId, title, workspace, onChange 
   function startRound() { setRound(current => current + 1); setIndex(0); resetAnswer(); }
   function applyPreferences(next: SmartStudyPreferences) { setPreferences(next); setSettingsOpen(false); startRound(); }
 
+  async function generateMoreQuestions() {
+    const source = workspace.documents.at(-1);
+    if (!source) { setGenerationError("Hãy thêm tài liệu trước khi tạo thêm câu hỏi."); return; }
+    setGenerating(true); setGenerationError("");
+    try {
+      const job = await studyApi.generate(materialId, "study_questions",
+        `Tạo thêm câu hỏi Học thông minh mới từ tài liệu “${source.title}”, không lặp các câu đã có.`,
+        crypto.randomUUID(), { materialSource: "document", documentId: source.id });
+      await studyApi.getGeneration(materialId, job.id);
+      await onRefreshStudyContent?.();
+      setRound(value => value + 1); setIndex(0); resetAnswer();
+    } catch (error) {
+      setGenerationError(error instanceof Error ? error.message : "Chưa tạo được câu hỏi mới.");
+    } finally { setGenerating(false); }
+  }
+
   return <section className={styles.container} aria-label="Học thông minh">
     <SmartProgress correct={workspace.smartCorrect} answered={workspace.smartAnswered} total={workspace.terms.length} onSettings={() => setSettingsOpen(true)} />
-    {!questions.length ? <div className={styles.empty}><h1>Học thông minh</h1><p>Thêm thẻ học để bắt đầu luyện tập với “{title}”.</p><Link to={`/memorize/${materialId}/list`}>Tạo thẻ học</Link><Link to={`/study/${materialId}`}>Thêm tài liệu</Link></div>
-      : !question ? <div className={styles.empty}><h1>Hoàn thành lượt học!</h1><p>Bạn đã luyện tập {totalQuestions} câu hỏi từ bộ thẻ của mình.</p><button className={styles.primary} type="button" onClick={startRound}>Bắt đầu lượt mới</button><button className={styles.reveal} type="button" onClick={() => setHistoryOpen(true)}>Lịch sử câu hỏi</button></div>
+    {!questions.length ? <div className={styles.empty}><h1>Học thông minh</h1><p>Thêm tài liệu để tạo bộ câu hỏi học tập cho “{title}”.</p><Link to={`/memorize/${materialId}/list`}>Mở flashcard</Link><Link to={`/study/${materialId}`}>Thêm tài liệu</Link></div>
+      : !question ? <div className={styles.empty}><h1>Hoàn thành bộ câu hỏi!</h1><p>Bạn đã trả lời hết {totalQuestions} câu hỏi hiện có.</p>
+        {generatedQuestions.length ? studyContent?.plus
+          ? <button className={styles.primary} type="button" disabled={generating} onClick={() => { void generateMoreQuestions(); }}>{generating ? "Đang tạo câu hỏi…" : "Tạo thêm câu hỏi (Plus)"}</button>
+          : <button className={styles.primary} type="button" onClick={() => setShowPlus(true)}>Nâng cấp Plus để tạo thêm</button>
+          : <button className={styles.primary} type="button" onClick={startRound}>Bắt đầu lượt mới</button>}
+        {generationError && <p role="alert">{generationError}</p>}<button className={styles.reveal} type="button" onClick={() => setHistoryOpen(true)}>Lịch sử câu hỏi</button></div>
       : <div className={styles.questionArea}>
         <h1 className={styles.question}>{question.prompt}</h1>
-        {isMatching ? <SmartMatching key={round} terms={matchingTerms} revealed={Boolean(response)} onComplete={correct => recordResponse(correct ? "correct" : "incorrect")} /> : question.type === "choice" ? <div className={styles.options}>
+        {isMatching ? <SmartMatching key={`${round}-${question.id}`} terms={activeMatchingTerms} revealed={Boolean(response)} onComplete={correct => recordResponse(correct ? "correct" : "incorrect")} /> : question.type === "choice" ? <div className={styles.options}>
           {question.options.map((option, optionIndex) => {
             const expected = Boolean(response) && isCorrectAnswer(option, question.answer);
             const wrong = answer === option && response === "incorrect";
@@ -81,11 +113,32 @@ export default function SmartStudyView({ materialId, title, workspace, onChange 
         <div className={styles.bottomActions}>{response ? <button className={styles.primary} type="button" onClick={nextQuestion}>{index === totalQuestions - 1 ? "Hoàn thành lượt học" : "Câu hỏi tiếp theo"}</button>
           : question.type === "short" && answer.trim() ? <button className={styles.primary} type="submit" form="smart-answer-form">Kiểm tra</button>
           : <button className={styles.primary} type="button" onClick={() => recordResponse("skipped")}>Bỏ qua</button>}</div>
-        {response && <div className={styles.feedback} role="status"><strong>{resultLabels[response]}</strong><p>{currentTerm ? `${currentTerm.term}: ${currentTerm.definition}` : question.answer}</p>
-          <details><summary>Tìm hiểu thêm</summary><p>{sourceDocument ? `Nguồn: ${sourceDocument.title}` : "Nội dung từ thẻ học của bạn."}</p><Link to={`/study/${materialId}`}>Mở tài liệu học tập</Link><p className={styles.note}>Giải thích từ nội dung cục bộ; chưa sử dụng AI.</p></details>
+        {response && <div className={styles.feedback} role="status"><strong>{resultLabels[response]}</strong><p>{question.coreKnowledge || (currentTerm ? `${currentTerm.term}: ${currentTerm.definition}` : question.answer)}</p>
+          <details><summary>Tìm hiểu thêm</summary><p>{sourceDocument ? `Nguồn: ${sourceDocument.title}` : "Kiến thức từ bộ câu hỏi đã lưu."}</p>{question.hint && <p><b>Gợi ý:</b> {question.hint}</p>}<Link to={`/study/${materialId}`}>Mở tài liệu học tập</Link></details>
         </div>}
       </div>}
     {settingsOpen && <SmartStudySettings preferences={preferences} onSave={applyPreferences} onClose={() => setSettingsOpen(false)} />}
     {historyOpen && <StudyModal title="Lịch sử câu hỏi" onClose={() => setHistoryOpen(false)}><p className={styles.note}>Các câu đã luyện tập trong phiên học này.</p><ol className={styles.history}>{history.map((entry, entryIndex) => <li key={entryIndex}><strong>{entry.prompt}</strong><p>{resultLabels[entry.result]}{entry.selected ? ` — ${entry.selected}` : ""}</p><p>Đáp án: {entry.answer}</p></li>)}</ol></StudyModal>}
+    {showPlus && <PlusUpgradeDialog onClose={() => setShowPlus(false)} />}
   </section>;
+}
+
+function mapStudyQuestion(item: StudyQuestion, setId: string, index: number): ActiveQuestion {
+  const matchingTerms = item.pairs?.map((pair, pairIndex) => ({
+    id: `${setId}-${index}-${pairIndex}`,
+    term: pair.term,
+    definition: pair.definition,
+    level: 0,
+  }));
+  const answer = item.correctAnswer ?? matchingTerms?.map(pair => `${pair.term}: ${pair.definition}`).join("; ") ?? "";
+  return {
+    id: `${setId}-${index}`,
+    prompt: item.prompt,
+    answer,
+    options: item.options ?? [],
+    type: item.type === "multiple_choice" ? "choice" : "short",
+    matchingTerms,
+    hint: item.hint,
+    coreKnowledge: item.coreKnowledge,
+  };
 }

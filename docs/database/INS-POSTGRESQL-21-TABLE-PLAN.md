@@ -1,16 +1,16 @@
-# INS — Phương án PostgreSQL 22 bảng
+# INS — Phương án PostgreSQL 21 bảng
 
-**Trạng thái:** Đã thống nhất hướng tinh giản: chỉ gộp hai bảng theo yêu cầu của người dùng. Chi tiết cột, ràng buộc và nghiệp vụ chia sẻ vẫn chờ duyệt trước khi triển khai.
-**Phạm vi:** Tài liệu thiết kế; chưa tạo database, migration hoặc thay đổi dữ liệu ứng dụng.
+**Trạng thái:** Người dùng đã duyệt triển khai PostgreSQL và backend Spring Boot. Schema 21 bảng đã được tạo thành migration Flyway trong `Backend/src/main/resources/db/migration`.
+**Phạm vi hiện thực:** Schema và seed gói dịch vụ; API tài khoản, lớp và bộ học liệu. Các luồng tài liệu/học tập/chia sẻ sẽ được nối theo từng phần tiếp theo.
 
 ## 1. Thay đổi so với thiết kế đầy đủ
 
 1. Gộp `plan_features` vào cột `plans.features` kiểu JSONB.
 2. Gộp `message_citations` vào cột `messages.citations` kiểu JSONB.
 3. Giữ nguyên các bảng còn lại, không áp dụng phương án tinh giản 16 bảng.
-4. Giữ `material_shares` trong phạm vi chia sẻ giữa tài khoản đã bàn trước đó; cơ chế quyền chi tiết vẫn cần duyệt.
+4. Chia sẻ dùng liên kết chứa snapshot tạm trong Redis, không lưu quan hệ chia sẻ hoặc bảng `material_shares` trong PostgreSQL.
 
-Bản gốc ghi 26 bảng nhưng thực tế liệt kê 23. Số lượng đúng của phương án này: **23 − 2 + 1 bảng chia sẻ = 22 bảng**. Nếu chưa triển khai chia sẻ thì phần lõi có 21 bảng.
+Bản gốc ghi 26 bảng nhưng thực tế liệt kê 23. Sau khi gộp `plan_features` vào `plans` và `message_citations` vào `messages`, phương án còn **21 bảng**.
 
 ## 2. Danh sách bảng
 
@@ -37,7 +37,6 @@ Bản gốc ghi 26 bảng nhưng thực tế liệt kê 23. Số lượng đúng
 | 19 | messages | Tin nhắn và danh sách trích dẫn JSONB |
 | 20 | plans | Gói dịch vụ và quyền lợi JSONB |
 | 21 | subscriptions | Lịch sử đăng ký gói |
-| 22 | material_shares | Quyền đọc/luyện tập học liệu được chia sẻ |
 
 Các trường và quan hệ của bảng giữ lại tiếp tục theo bản thiết kế đầy đủ và ERD, không bị chuyển sang JSONB hoặc hoãn theo phương án 16 bảng. `user_profiles` không được thêm riêng vì không thuộc danh sách bảng gốc; hồ sơ tiếp tục nằm trong `users`.
 
@@ -104,22 +103,40 @@ Ví dụ minh họa:
 - Tiến độ mỗi người, câu hỏi/đáp án snapshot, kết quả cuối cùng, xóa mềm học liệu và các ràng buộc nghiệp vụ của bản gốc được giữ lại.
 - Có bảng baseline không đồng nghĩa được phép tự chuyển dữ liệu trình duyệt: chuyển đổi là bước riêng sau khi duyệt.
 
-## 6. Chia sẻ giữa tài khoản — đề xuất tiếp tục giữ trong phạm vi
+## 6. Chia sẻ bằng liên kết snapshot (không cần bảng database)
 
-`material_shares(material_id, recipient_id, created_at, revoked_at)`; PK ghép `(material_id, recipient_id)`; hai FK đến study_materials và users.
+Luồng này tạo **bản sao độc lập** cho người nhận. Không cấp quyền truy cập liên tục vào học liệu của chủ sở hữu.
 
-- Chủ sở hữu cấp/thu hồi quyền cho tài khoản đã tồn tại.
-- Người nhận được đọc và luyện tập, có tiến độ và hội thoại riêng; không sửa nội dung hoặc chia sẻ tiếp.
-- Đây là cấp quyền trên cùng học liệu, không sao chép.
-- Không chia sẻ mặc nhiên các lớp, lịch sử hoặc hội thoại riêng của người khác.
-- Backend kiểm tra quyền trên mỗi yêu cầu; ID hoặc URL không thay thế quyền truy cập.
-- Cơ chế liên kết công khai, email mời, tải file gốc, quyền xem lịch sử sau thu hồi và hiệu lực khi khôi phục thùng rác vẫn cần chốt; yêu cầu gộp hai bảng không được hiểu là đã duyệt các chính sách này.
+### Tạo liên kết
 
+1. Chủ sở hữu yêu cầu tạo liên kết cho một học liệu còn hoạt động.
+2. Backend xác thực chủ sở hữu, kiểm tra quyền truy cập và tạo snapshot nhất quán gồm nội dung cần chia sẻ: học liệu, tài liệu/nội dung, thẻ và các dữ liệu học tập thuộc phạm vi đã duyệt. Không đưa thông tin cá nhân, hội thoại, lịch sử riêng tư hoặc thông tin xác thực vào snapshot.
+3. Backend sinh token ngẫu nhiên đủ mạnh; Redis lưu `share_course:{token}` cùng snapshot hoặc tham chiếu đến snapshot, và TTL. Thời hạn 7 ngày hoặc 30 ngày là giá trị cấu hình cần chốt, không phải quyết định cuối cùng.
+4. Backend trả URL chứa token cho chủ sở hữu. Không tạo hàng trong PostgreSQL khi tạo link.
+
+### Nhận bản sao
+
+1. Người nhận đăng nhập INS, mở URL và xác nhận “Thêm bản sao vào tài khoản”.
+2. Backend kiểm tra token còn hạn và hợp lệ; xác nhận tiêu thụ token theo cách nguyên tử để hai request đồng thời không tạo hai bản sao ngoài ý muốn.
+3. Trong một transaction PostgreSQL, backend tạo học liệu mới thuộc người nhận và sao chép các bản ghi liên quan với UUID mới, ánh xạ lại toàn bộ khóa ngoại nội bộ; chủ sở hữu mới là `user_id` người nhận.
+4. Chỉ xóa token khỏi Redis sau khi transaction ghi bản sao thành công. Nếu ghi thất bại, token còn hiệu lực để thử lại trước TTL.
+5. Bản sao hoạt động độc lập. Các chỉnh sửa hoặc xóa ở bản gốc không đồng bộ sang bản sao.
+
+### Hết hạn, thu hồi và giới hạn
+
+- Redis tự hết hạn snapshot theo TTL. Chủ sở hữu có thể thu hồi link trước khi nhận bằng cách xóa key Redis.
+- Thu hồi link không xóa hoặc khóa bản sao mà người nhận đã nhận thành công.
+- Một link là một lần nhận; muốn chia sẻ cho người khác thì tạo link khác. Nếu muốn link dùng nhiều lần, phải chốt giới hạn lượt nhận và chống lặp trước khi triển khai.
+- Token phải khó đoán, không chứa ID học liệu/email, không ghi token đầy đủ vào log; cần giới hạn tốc độ thử token.
+- Bản sao phải được ghi nguyên tử; không để lại học liệu hoặc tài liệu dở dang khi lỗi giữa chừng.
+- Redis là thành phần hạ tầng ngoài PostgreSQL, không được tính thành bảng nghiệp vụ. Cần quyết định hành vi khi cache mất dữ liệu, sao lưu/cache HA và nội dung nào nằm trong snapshot.
+
+**Kết quả thiết kế:** không có bảng `material_shares`; tổng số bảng PostgreSQL vẫn là **21**.
 ## 7. Kế hoạch triển khai sau khi duyệt
 
 | Bước | Công việc | Bàn giao |
 |---|---|---|
-| 1 | Chốt từ điển dữ liệu 22 bảng và chính sách chia sẻ/xóa | Schema chi tiết, FK, nullable, unique/check |
+| 1 | Chốt từ điển dữ liệu 21 bảng và luồng snapshot chia sẻ/xóa | Schema chi tiết, FK, nullable, unique/check |
 | 2 | Chốt cấu trúc features/citations và quy tắc kiểm tra | Hợp đồng dữ liệu JSONB |
 | 3 | Tạo PostgreSQL + pgAdmin local, migrations | Database rỗng có thể dựng lại |
 | 4 | Seed người dùng giả, học liệu, phiên học và chia sẻ | Dữ liệu demo không ghi đè localStorage |
@@ -129,12 +146,15 @@ Ví dụ minh họa:
 
 ## 8. Tiêu chí nghiệm thu bổ sung
 
-- Schema có 22 bảng nghiệp vụ; không còn bảng plan_features hoặc message_citations.
+- Schema có 21 bảng nghiệp vụ; không còn bảng plan_features, message_citations hoặc material_shares.
 - Có đầy đủ sáu bảng từng bị gộp/hoãn trong phương án 16 bảng: generation_sources, question_options, question_feedback, study_settings, legacy_progress_baselines, artifact_sources.
 - Features sai kiểu, quota âm hoặc tính năng không hợp lệ bị từ chối.
 - Citations không được tham chiếu tài liệu của học liệu khác hoặc tài liệu người dùng không được truy cập.
 - Lịch sử câu hỏi/đáp án và tiến độ từng người không đổi khi sửa nội dung nguồn.
-- Người không có quyền hoặc đã bị thu hồi không truy cập được học liệu qua API.
+- Token hết hạn/đã tiêu thụ/bị thu hồi không tạo thêm bản sao; bản sao đã nhận độc lập với bản gốc.
 - Seed và migrations chạy lại có kiểm soát, sao lưu/khôi phục được kiểm tra.
 
 **ERD hiện hành:** [erd.md](./erd.md).
+
+
+

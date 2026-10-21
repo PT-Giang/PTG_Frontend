@@ -1,7 +1,6 @@
-# INS — Sơ đồ ERD PostgreSQL
+# INS — ERD PostgreSQL (bản lịch sử 21 bảng)
 
-**Trạng thái:** Đề xuất để duyệt, chưa triển khai database.
-**Phương án hiện hành:** [Plan 22 bảng](./INS-POSTGRESQL-22-TABLE-PLAN.md). Chỉ gộp plan_features vào plans và message_citations vào messages; giữ các bảng khác và bổ sung quyền chia sẻ trong phạm vi đã bàn.
+**Trạng thái:** Bản ERD này mô tả phương án cũ 21 bảng và được giữ làm lịch sử. Phương án hiện hành là [plan PostgreSQL 22 bảng](./INS-MINIMAL-DATABASE-PLAN.md), bổ sung `generation_sources`, danh mục `missions` dùng chung và `mission_progress` theo từng user; dùng nguồn cho citations thay cho `messages.citations`, và quy định share nội dung dạng bản sao không kèm tiến độ.
 
 ## Cách đọc
 
@@ -10,20 +9,18 @@
 - Các cột ghi `nullable` là quan hệ không bắt buộc.
 - Tên cột và kiểu dữ liệu dưới đây là đề xuất chi tiết hóa từ plan; chưa phải schema đã được duyệt. Sơ đồ ưu tiên khóa và trường nghiệp vụ chính, không liệt kê mọi trường audit.
 
-## Điểm cần chốt trước khi tạo schema
+## Ghi chú lịch sử
 
-1. Bản gốc thực tế có 23 bảng dù ghi 26. Phương án hiện hành: 23 − 2 bảng được gộp + material_shares = **22 bảng**.
+1. Bản gốc thực tế có 23 bảng dù ghi 26. Phương án hiện hành: 23 − 2 bảng được gộp = **21 bảng**.
 2. `user_profiles` xuất hiện trong phần ánh xạ nhưng không có trong danh sách bảng. ERD tạm giữ hồ sơ trong `users`, theo nhóm A.
-3. material_shares được đưa vào sơ đồ tổng thể để hỗ trợ chia sẻ giữa tài khoản. Chính sách quyền chi tiết vẫn cần duyệt trước khi triển khai.
+3. Chia sẻ bằng snapshot qua Redis; Redis không nằm trong ERD PostgreSQL và không phát sinh bảng chia sẻ.
 4. `messages.sender_role` biểu thị user/assistant/system; người sở hữu hội thoại được xác định qua `conversations.user_id`. Nếu cần lưu nhiều người gửi thật, phải bổ sung `sender_user_id`.
 5. `question_feedback` tạm cho tối đa một đánh giá trên mỗi câu hỏi của một phiên; plan chưa chốt số lần phản hồi.
 
-## ERD tổng thể — 22 bảng
+## ERD tổng thể — 21 bảng
 
 ```mermaid
 erDiagram
-    users ||--o{ material_shares : receives_access
-    study_materials ||--o{ material_shares : grants_access
     users ||--o{ classes : owns
     users ||--o{ study_materials : owns
     classes o|--o{ study_materials : groups
@@ -98,8 +95,6 @@ erDiagram
         text processing_status
         text error_message "nullable"
     }
-    users ||--o{ material_shares : receives_access
-    study_materials ||--o{ material_shares : grants_access
     users ||--o{ classes : owns
     users ||--o{ study_materials : owns
     classes o|--o{ study_materials : groups
@@ -274,6 +269,7 @@ erDiagram
         uuid material_id FK
         timestamptz created_at
     }
+    messages {
         uuid id PK
         uuid conversation_id FK
         text sender_role "user assistant system"
@@ -318,30 +314,13 @@ erDiagram
 
 Một người có nhiều đăng ký trong lịch sử nhưng tối đa một bản ghi `status = active`: cần unique index có điều kiện trên `user_id`. Quyền Plus phải kiểm tra cả thời hạn. Không có Plus hợp lệ thì áp dụng Free. `price_minor >= 0`; nếu có hạn mức trong features thì `quota >= 0`; backend kiểm tra cấu trúc từng quyền lợi. Features là JSON object, citations là JSON array.
 
-## 6. Quyền chia sẻ — thuộc phương án 22 bảng
+## 6. Chia sẻ bằng snapshot qua Redis
 
-Bảng `material_shares` lưu quyền đọc và luyện tập cho tài khoản đã tồn tại:
-
-```mermaid
-erDiagram
-    users ||--o{ material_shares : receives_access
-    study_materials ||--o{ material_shares : grants_access
-    material_shares {
-        uuid material_id PK,FK
-        uuid recipient_id PK,FK
-        text permission "read_practice"
-        timestamptz created_at
-        timestamptz revoked_at "nullable"
-    }
-```
-
-Tổng số hiện tại là **22 bảng**, đã gộp hai bảng theo yêu cầu. Một mức quyền cố định read/practice nên chưa cần cột permission. Chia sẻ bằng liên kết công khai hoặc sao chép học liệu là nghiệp vụ khác; cần chốt cơ chế trước khi thêm bảng/token. Bản plan hiện mô tả cấp quyền đọc và luyện tập, nên ERD không tự đổi sang cơ chế sao chép.
-
-## Ghi chú triển khai sau khi duyệt
+Liên kết chia sẻ và snapshot tạm là dữ liệu cache/hạ tầng, không thuộc schema PostgreSQL nên không có bảng hoặc quan hệ trong ERD. Khi người nhận chấp nhận link, backend tạo transaction sao chép học liệu cùng các bản ghi phụ thuộc với UUID mới và `owner_id` là người nhận. Bản sao độc lập; hết hạn hoặc thu hồi token chỉ ngăn nhận thêm, không thu hồi bản sao đã tạo.
+## Ghi chú triển khai
 
 - Quan hệ trong sơ đồ không mặc nhiên đồng nghĩa `ON DELETE CASCADE`; chính sách xóa phải chốt theo lịch sử và quyền riêng tư.
 - Ưu tiên xóa mềm/lưu trữ học liệu và thẻ. Bản chụp câu hỏi, đáp án và kết quả cần được bảo toàn.
 - Các quan hệ phải cùng học liệu/chủ sở hữu cần ràng buộc ghép hoặc cơ chế kiểm tra phù hợp; FK đơn lẻ không đủ.
-- Tên lớp duy nhất theo chủ sở hữu và trường màu lớp là đề xuất cần bổ sung để khớp frontend mới; chưa tự đưa vào plan gốc.
-- Không tạo database, migration, seed hoặc thay đổi dữ liệu hiện có trong lần vẽ ERD này.
-
+- Tên lớp duy nhất theo chủ sở hữu và trường màu lớp đã được bổ sung trong migration để khớp frontend.
+- Không có bảng `material_shares`; liên kết chia sẻ và snapshot lưu tạm ở Redis khi luồng chia sẻ được triển khai.

@@ -1,25 +1,55 @@
 import { useState } from "react";
 import type { QuizAttempt, QuizQuestion, StudyViewProps } from "@/study/types";
-import { generateQuiz } from "@/study/quiz";
+import { studyApi } from "@/study/studyApi";
 import QuizSession from "../QuizSession/QuizSession";
 import QuizResults from "../QuizResults/QuizResults";
 import styles from "./QuizView.module.css";
 
-export default function QuizView({ title, workspace, onChange }: StudyViewProps) {
+export default function QuizView({ materialId, title, workspace, onRefreshStudyContent, onChange }: StudyViewProps) {
   const [minutes, setMinutes] = useState(10);
   const [timed, setTimed] = useState(true);
-  const [choiceCount, setChoiceCount] = useState(Math.min(11, workspace.terms.length));
+  const [choiceCount, setChoiceCount] = useState(5);
   const [shortCount, setShortCount] = useState(0);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [selected, setSelected] = useState<QuizAttempt | null>(null);
   const [error, setError] = useState("");
-  const startQuiz = () => {
-    const generated = generateQuiz(workspace.terms, choiceCount, shortCount);
-    if (!generated.length) {
-      setError("Thêm ít nhất hai định nghĩa khác nhau để làm trắc nghiệm, hoặc chọn câu trả lời ngắn khi đã có thuật ngữ.");
+  const [busy, setBusy] = useState(false);
+  const startQuiz = async () => {
+    const total = choiceCount + shortCount;
+    if (!total || total > 15) {
+      setError("Chọn ít nhất một câu và tối đa 15 câu cho mỗi bài kiểm tra.");
       return;
     }
-    setError(""); setSelected(null); setQuestions(generated);
+    const source = workspace.documents.at(-1);
+    if (!source) { setError("Thêm tài liệu trước khi tạo bài kiểm tra."); return; }
+    setBusy(true); setError(""); setSelected(null);
+    try {
+      const topic = source.sourceType === "topic";
+      const job = await studyApi.generate(materialId, "quiz", `Tạo bài kiểm tra theo yêu cầu: ${choiceCount} câu trắc nghiệm và ${shortCount} câu trả lời ngắn.`, crypto.randomUUID(), {
+        materialSource: topic ? "requirement" : "document",
+        ...(!topic ? { documentId: source.id } : {}),
+        questionCount: total,
+        choiceCount,
+        shortAnswerCount: shortCount,
+      });
+      const result = await studyApi.getGeneration(materialId, job.id);
+      const rawQuestions = result.output?.questions;
+      if (!Array.isArray(rawQuestions)) throw new Error("Backend không trả về danh sách câu hỏi hợp lệ.");
+      const generated = rawQuestions.flatMap((item, index): QuizQuestion[] => {
+        if (typeof item !== "object" || item === null || Array.isArray(item)) return [];
+        const question = item as Record<string, unknown>;
+        if (typeof question.prompt !== "string" || typeof question.correctAnswer !== "string") return [];
+        const options = Array.isArray(question.options) ? question.options.filter((option): option is string => typeof option === "string") : [];
+        return [{ id: `${job.id}-${index}`, prompt: question.prompt, answer: question.correctAnswer, options,
+          type: question.type === "short_answer" ? "short" : "choice" }];
+      });
+      if (generated.length !== total) throw new Error("AI chưa tạo đủ số câu theo yêu cầu. Hãy thử tạo lại.");
+      setQuestions(generated);
+      await onRefreshStudyContent?.();
+    } catch (quizError) {
+      setError(quizError instanceof Error ? quizError.message : "Chưa tạo được bài kiểm tra.");
+      await onRefreshStudyContent?.();
+    } finally { setBusy(false); }
   };
   const complete = (attempt: QuizAttempt) => {
     onChange({ ...workspace, attempts: [attempt, ...workspace.attempts] });
@@ -41,12 +71,11 @@ export default function QuizView({ title, workspace, onChange }: StudyViewProps)
         </div>
         <div>
           <h2>Câu hỏi</h2>
-          <label className={styles.count}>Lựa chọn nhiều<input type="number" min={0} max={workspace.terms.length} value={choiceCount} onChange={(event) => setChoiceCount(Math.max(0, Math.min(workspace.terms.length, Number(event.target.value))))} /></label>
-          <label className={styles.count}>Câu hỏi trả lời ngắn<input type="number" min={0} max={workspace.terms.length} value={shortCount} onChange={(event) => setShortCount(Math.max(0, Math.min(workspace.terms.length, Number(event.target.value))))} /></label>
-          <p className={styles.note}>Tạo tối đa {workspace.terms.length} câu từ thuật ngữ hiện có, ưu tiên trắc nghiệm và không lặp lại thuật ngữ.</p>
-          <p className={styles.note}>Chế độ cục bộ dùng câu hỏi theo định nghĩa. Điều chỉnh độ khó bằng AI sẽ được bổ sung sau.</p>
+          <label className={styles.count}>Trắc nghiệm<input type="number" min={0} max={15} value={choiceCount} onChange={(event) => setChoiceCount(Math.max(0, Math.min(15, Number(event.target.value))))} /></label>
+          <label className={styles.count}>Trả lời ngắn<input type="number" min={0} max={15} value={shortCount} onChange={(event) => setShortCount(Math.max(0, Math.min(15, Number(event.target.value))))} /></label>
+          <p className={styles.note}>AI tạo câu hỏi từ tài liệu đã cung cấp. Tổng mỗi bài kiểm tra tối đa 15 câu.</p>
         </div>
-        <button className={styles.create} type="button" onClick={startQuiz}>Tạo bài kiểm tra</button>
+        <button className={styles.create} type="button" disabled={busy} onClick={() => { void startQuiz(); }}>{busy ? "Đang tạo bài kiểm tra…" : "Tạo bài kiểm tra"}</button>
       </div>
       {error && <p role="alert" className={styles.error}>{error}</p>}
       <h2>Bài kiểm tra &quot;{title}&quot;</h2>

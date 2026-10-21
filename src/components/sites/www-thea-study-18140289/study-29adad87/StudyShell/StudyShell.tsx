@@ -13,6 +13,7 @@ import QuizView from "../../test-e8eca392/QuizView/QuizView";
 import SmartStudyView from "../../smartStudy-2cee7095/SmartStudyView/SmartStudyView";
 import { useStudyWorkspace } from "@/study/useStudyWorkspace";
 import { downloadText } from "@/study/repository";
+import { studyApi } from "@/study/studyApi";
 import styles from "./StudyShell.module.css";
 
 interface StudyShellProps { materialId: string; view: string; mode?: "list" | "flashcards" | "games" }
@@ -23,7 +24,12 @@ export default function StudyShell({ materialId, view, mode = "flashcards" }: St
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const store = useStudyWorkspace(materialId);
   const { material, workspace, ready, error, saveError } = store;
-  const props = { materialId, title: material?.title || "", workspace, onChange: store.updateWorkspace };
+  const props = { materialId, title: material?.title || "", workspace, studyContent: store.studyContent,
+    onRefreshStudyContent: store.refreshStudyContent,
+    onReviewFlashcard: async (flashcardId: string, correct: boolean) => {
+      await studyApi.recordFlashcardReview(materialId, flashcardId, correct);
+      await store.refreshStudyContent();
+    }, onChange: store.updateWorkspace };
   return <div className={`${homeStyles.page} ${dark ? homeStyles.dark : ""}`} lang="vi">
     <a className={homeStyles.skip} href="#study-content">Bỏ qua đến nội dung học tập</a>
     <HomeHeader studyMode isDark={dark} onToggleTheme={() => setDark(!dark)} onAction={type => setDialog({ type, material: material || undefined })} />

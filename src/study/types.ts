@@ -1,8 +1,19 @@
+import type { StudyContentResponse } from "./studyApi";
+
 export interface StudyDocument {
   id: string;
   title: string;
   text: string;
   createdAt: string;
+  sourceType?: "upload" | "url" | "topic" | "text" | "mock";
+  sourceUrl?: string;
+}
+
+export interface StudyImport {
+  title: string;
+  sourceType: "upload" | "topic" | "text";
+  content?: string;
+  file?: File;
 }
 
 export interface StudyTerm {
@@ -43,5 +54,9 @@ export interface StudyViewProps {
   materialId: string;
   title: string;
   workspace: StudyWorkspace;
+  studyContent?: StudyContentResponse;
+  onRefreshStudyContent?: () => Promise<void>;
+  onReviewFlashcard?: (flashcardId: string, correct: boolean) => Promise<void>;
   onChange: (workspace: StudyWorkspace) => void;
 }
+

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import SocialButtons from "../SocialButtons/SocialButtons";
+import { authApi } from "@/services/api";
 import styles from "./AuthPanel.module.css";
 interface AuthPanelProps { mode?: "login" | "register" | "forgot"; initialEmail?: string }
 export default function AuthPanel({ mode = "login", initialEmail = "" }: AuthPanelProps) {
@@ -8,11 +9,29 @@ export default function AuthPanel({ mode = "login", initialEmail = "" }: AuthPan
   const [emailSignup, setEmailSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   const isRegister = mode === "register";
   const isForgot = mode === "forgot";
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage(isForgot ? "Demo mode: no reset email was sent. Connect an email service to enable password recovery." : isRegister ? "Demo mode: your form is valid. Account creation will be available when a backend is connected." : "Demo mode: your form is valid. Connect an authentication service to sign in.");
+    if (isForgot) {
+      setMessage("Chức năng đặt lại mật khẩu chưa được bật.");
+      return;
+    }
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("password") ?? "");
+    setIsSubmitting(true);
+    setMessage("");
+    try {
+      if (isRegister) await authApi.register(email, password, String(formData.get("name") ?? ""));
+      else await authApi.login(email, password);
+      navigate("/");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không thể kết nối máy chủ. Hãy thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
   function handleProvider(provider: string) { setMessage(`${provider} sign-in is not connected in this demo.`); }
   return <div className={styles.wrapper}>
@@ -24,7 +43,7 @@ export default function AuthPanel({ mode = "login", initialEmail = "" }: AuthPan
       {isForgot ? <><h1 className={styles.heading}>Forgot password?</h1><p className={styles.description}>Enter your email to reset your password.</p></> : !emailSignup ? <SocialButtons isRegister={isRegister} onSelect={handleProvider} /> : <button type="button" className={styles.back} onClick={() => {setEmailSignup(false); setMessage("");}}>← Try another method</button>}
       {!isRegister && !isForgot && <div className={styles.divider}><span>or</span></div>}
       {isRegister && !emailSignup ? <button className={styles.emailButton} type="button" onClick={() => setEmailSignup(true)}>✉ <span>Sign up with email</span></button> : <form onSubmit={handleSubmit}>
-        {isRegister && <div className={styles.group}><label className={styles.label} htmlFor="name">Name</label><input className={styles.input} id="name" name="name" autoComplete="name" required maxLength={255} /></div>}
+        {isRegister && <div className={styles.group}><label className={styles.label} htmlFor="name">Name</label><input className={styles.input} id="name" name="name" autoComplete="name" required maxLength={100} /></div>}
         <div className={styles.group}>
           {isRegister && <label className={styles.label} htmlFor="email">Email</label>}
           <input className={styles.input} id="email" name="email" type="email" placeholder={isRegister ? undefined : "Email"} aria-label="Email" autoComplete="email" required maxLength={255} value={email} onChange={event => setEmail(event.target.value)} />
@@ -32,7 +51,7 @@ export default function AuthPanel({ mode = "login", initialEmail = "" }: AuthPan
         {!isForgot && <div className={styles.group}>
           {isRegister && <><label className={styles.label} htmlFor="password">Password</label><small>Must be at least 12 characters</small></>}
           <div className={styles.password}>
-            <input className={styles.input} id="password" name="password" type={showPassword ? "text" : "password"} placeholder={isRegister ? undefined : "Password"} aria-label="Password" autoComplete={isRegister ? "new-password" : "current-password"} required minLength={isRegister ? 12 : undefined} maxLength={255} />
+            <input className={styles.input} id="password" name="password" type={showPassword ? "text" : "password"} placeholder={isRegister ? undefined : "Password"} aria-label="Password" autoComplete={isRegister ? "new-password" : "current-password"} required minLength={isRegister ? 12 : undefined} maxLength={72} />
             {isRegister && <button type="button" className={styles.reveal} onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? "Hide" : "Show"}</button>}
           </div>
         </div>}
@@ -42,7 +61,7 @@ export default function AuthPanel({ mode = "login", initialEmail = "" }: AuthPan
         </div>}
         {isRegister && <label className={`${styles.group} ${styles.agreement}`}><input type="checkbox" required /> <span>I have read the reference <a href="https://www.thea.study/termsOfService" target="_blank" rel="noopener noreferrer">terms of service</a>, <a href="https://www.thea.study/privacyPolicy" target="_blank" rel="noopener noreferrer">privacy policy</a> and cookie usage.</span></label>}
         <div className={styles.group}>
-          <button type="submit" className={styles.primary}>{isForgot ? "Send reset link" : isRegister ? "Register" : "Sign in"}</button>
+          <button type="submit" className={styles.primary} disabled={isSubmitting}>{isSubmitting ? "Đang xử lý…" : isForgot ? "Send reset link" : isRegister ? "Register" : "Sign in"}</button>
           {!isRegister && !isForgot && <div className={styles.disclaimer}>Reference policies from Thea: <a href="https://www.thea.study/termsOfService" target="_blank" rel="noopener noreferrer">terms of service</a>, <a href="https://www.thea.study/privacyPolicy" target="_blank" rel="noopener noreferrer">privacy policy</a> and cookie usage.</div>}
         </div>
       </form>}
