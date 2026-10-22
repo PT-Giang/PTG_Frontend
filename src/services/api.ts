@@ -45,6 +45,9 @@ export const authApi = {
     return apiRequest<AuthUser>("/api/auth/login", "POST", { email, password });
   },
   register(email: string, password: string, displayName: string): Promise<AuthUser> {
-    return apiRequest<AuthUser>("/api/auth/register", "POST", { email, password, displayName });
+    return apiRequest<AuthUser>("/api/auth/register", "POST", { email, password, displayName })
+  },
+  me(): Promise<AuthUser> {
+    return apiRequest<AuthUser>("/api/auth/me", "GET")
   },
 };
