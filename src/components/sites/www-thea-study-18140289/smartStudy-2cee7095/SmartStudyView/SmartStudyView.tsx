@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuiz, isCorrectAnswer } from "@/study/quiz";
 import type { StudyViewProps } from "@/study/types";
 import SmartStudySettings, { type SmartStudyPreferences } from "../SmartStudySettings/SmartStudySettings";
@@ -8,7 +8,7 @@ import StudyModal from "../StudyModal/StudyModal";
 import SmartMatching from "../SmartMatching/SmartMatching";
 import PlusUpgradeDialog from "../../shared/PlusUpgradeDialog/PlusUpgradeDialog";
 import { studyApi } from "@/study/studyApi";
-import type { StudyQuestion } from "@/study/studyApi";
+import type { StudyQuestion, StudySession } from "@/study/studyApi";
 import type { QuizQuestion, StudyTerm } from "@/study/types";
 import styles from "./SmartStudyView.module.css";
 
@@ -29,9 +29,12 @@ export default function SmartStudyView({ materialId, title, workspace, studyCont
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
   const [showPlus, setShowPlus] = useState(false);
+  const [session, setSession] = useState<StudySession | null>(null);
+  const [sessionError, setSessionError] = useState("");
   const [preferences, setPreferences] = useState<SmartStudyPreferences>({ difficulty: "auto", type: "choice", directions: "" });
   const responseLocked = useRef(false);
-  const generatedQuestions = useMemo(() => studyContent?.studyQuestionSets.flatMap(set => set.questions.map((item, index) => mapStudyQuestion(item, set.id, index))) ?? [], [studyContent?.studyQuestionSets]);
+  const activeQuestionSet = studyContent?.studyQuestionSets.at(-1);
+  const generatedQuestions = useMemo(() => activeQuestionSet?.questions.map((item, index) => mapStudyQuestion(item, activeQuestionSet.id, index)) ?? [], [activeQuestionSet]);
   const questions = useMemo<ActiveQuestion[]>(() => {
     if (generatedQuestions.length) return generatedQuestions;
     const count = Math.min(workspace.terms.length, 10);
@@ -50,19 +53,52 @@ export default function SmartStudyView({ materialId, title, workspace, studyCont
   const currentTerm = workspace.terms.find(term => term.id === question?.id);
   const sourceDocument = workspace.documents.find(document => document.id === currentTerm?.documentId);
 
-  function recordResponse(kind: ResponseKind, selected = "") {
+  useEffect(() => {
+    if (!activeQuestionSet) { setSession(null); return; }
+    let cancelled = false;
+    setSession(null); setSessionError("");
+    void studyApi.startSession(materialId, "smart", activeQuestionSet.id)
+      .then(created => { if (!cancelled) setSession(created); })
+      .catch(error => { if (!cancelled) setSessionError(error instanceof Error ? error.message : "Chưa tạo được phiên học."); });
+    return () => { cancelled = true; };
+  }, [activeQuestionSet, materialId]);
+
+  async function recordResponse(kind: ResponseKind, selected = "", serverResponse: unknown = selected) {
     if (responseLocked.current || !question) return;
     responseLocked.current = true;
+    let resolvedKind = kind;
+    if (session) {
+      const sessionQuestion = session.questions[index];
+      if (sessionQuestion) {
+        try {
+          const result = await studyApi.submitSessionResponse(session.id, sessionQuestion.id,
+            kind === "revealed" || kind === "skipped" ? null : serverResponse, undefined,
+            kind === "revealed" || kind === "skipped" ? kind : undefined);
+          resolvedKind = result.result;
+        } catch (error) {
+          responseLocked.current = false;
+          setSessionError(error instanceof Error ? error.message : "Chưa lưu được câu trả lời.");
+          return;
+        }
+      }
+    }
     setAnswer(selected);
-    setResponse(kind);
-    setHistory(entries => [...entries, { prompt: question.prompt, answer: question.answer, selected, result: kind }]);
-    onChange({ ...workspace, smartAnswered: workspace.smartAnswered + 1, smartCorrect: workspace.smartCorrect + (kind === "correct" ? 1 : 0) });
+    setResponse(resolvedKind);
+    setHistory(entries => [...entries, { prompt: question.prompt, answer: question.answer, selected, result: resolvedKind }]);
+    onChange({ ...workspace, smartAnswered: workspace.smartAnswered + 1, smartCorrect: workspace.smartCorrect + (resolvedKind === "correct" ? 1 : 0) });
   }
   function submitAnswer(value: string) {
-    if (value.trim() && question) recordResponse(isCorrectAnswer(value, question.answer) ? "correct" : "incorrect", value);
+    if (value.trim() && question) void recordResponse(isCorrectAnswer(value, question.answer) ? "correct" : "incorrect", value);
   }
   function resetAnswer() { setAnswer(""); setResponse(null); setRating(null); responseLocked.current = false; }
-  function nextQuestion() { if (!responseLocked.current) return; setIndex(current => current + 1); resetAnswer(); }
+  async function nextQuestion() {
+    if (!responseLocked.current) return;
+    if (index === totalQuestions - 1 && session) {
+      try { await studyApi.completeSession(session.id); }
+      catch (error) { setSessionError(error instanceof Error ? error.message : "Chưa hoàn tất được phiên học."); return; }
+    }
+    setIndex(current => current + 1); resetAnswer();
+  }
   function startRound() { setRound(current => current + 1); setIndex(0); resetAnswer(); }
   function applyPreferences(next: SmartStudyPreferences) { setPreferences(next); setSettingsOpen(false); startRound(); }
 
@@ -91,34 +127,35 @@ export default function SmartStudyView({ materialId, title, workspace, studyCont
           : <button className={styles.primary} type="button" onClick={() => setShowPlus(true)}>Nâng cấp Plus để tạo thêm</button>
           : <button className={styles.primary} type="button" onClick={startRound}>Bắt đầu lượt mới</button>}
         {generationError && <p role="alert">{generationError}</p>}<button className={styles.reveal} type="button" onClick={() => setHistoryOpen(true)}>Lịch sử câu hỏi</button></div>
-      : <div className={styles.questionArea}>
-        <h1 className={styles.question}>{question.prompt}</h1>
-        {isMatching ? <SmartMatching key={`${round}-${question.id}`} terms={activeMatchingTerms} revealed={Boolean(response)} onComplete={correct => recordResponse(correct ? "correct" : "incorrect")} /> : question.type === "choice" ? <div className={styles.options}>
-          {question.options.map((option, optionIndex) => {
-            const expected = Boolean(response) && isCorrectAnswer(option, question.answer);
-            const wrong = answer === option && response === "incorrect";
-            return <button key={`${index}-${optionIndex}`} type="button" disabled={Boolean(response)} aria-pressed={answer === option}
-              className={`${styles.option} ${expected ? styles.correct : ""} ${wrong ? styles.incorrect : ""}`} onClick={() => submitAnswer(option)}>
-              <span className={styles.number} aria-label={expected ? "Đúng" : wrong ? "Sai" : undefined}>{expected ? "✓" : wrong ? "×" : optionIndex + 1}</span><span>{option}</span>
-            </button>;
-          })}
-        </div> : <form id="smart-answer-form" className={styles.shortAnswer} onSubmit={event => { event.preventDefault(); submitAnswer(answer); }}>
-          <textarea aria-label="Câu trả lời của bạn" placeholder="Nhập câu trả lời của bạn..." value={answer} onChange={event => setAnswer(event.target.value)} disabled={Boolean(response)} className={response === "correct" ? styles.correctInput : response === "incorrect" ? styles.incorrectInput : undefined} />
-        </form>}
-        <div className={styles.topActions}>
-          <button type="button" className={styles.reveal} onClick={() => response ? setHistoryOpen(true) : recordResponse("revealed")}>{response ? "Lịch sử câu hỏi" : "Hiển thị câu trả lời"}</button>
-          <div className={styles.ratings}>{(["positive", "negative"] as const).map(value => <button key={value} type="button" className={value === "negative" ? styles.down : undefined} aria-label={value === "positive" ? "Phản hồi tích cực" : "Phản hồi tiêu cực"} aria-pressed={rating === value} onClick={() => setRating(value)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h4v12H2zM8 10l5-8c1-2 4-1 3 2l-1 5h5c2 0 3 1 2 3l-2 8c0 1-1 2-3 2H8z"/></svg></button>)}</div>
-        </div>
-        {rating && <p className={styles.status} role="status">Đã ghi nhận phản hồi trong phiên học này.</p>}
-        <div className={styles.bottomActions}>{response ? <button className={styles.primary} type="button" onClick={nextQuestion}>{index === totalQuestions - 1 ? "Hoàn thành lượt học" : "Câu hỏi tiếp theo"}</button>
-          : question.type === "short" && answer.trim() ? <button className={styles.primary} type="submit" form="smart-answer-form">Kiểm tra</button>
-          : <button className={styles.primary} type="button" onClick={() => recordResponse("skipped")}>Bỏ qua</button>}</div>
-        {response && <div className={styles.feedback} role="status"><strong>{resultLabels[response]}</strong><p>{question.coreKnowledge || (currentTerm ? `${currentTerm.term}: ${currentTerm.definition}` : question.answer)}</p>
-          <details><summary>Tìm hiểu thêm</summary><p>{sourceDocument ? `Nguồn: ${sourceDocument.title}` : "Kiến thức từ bộ câu hỏi đã lưu."}</p>{question.hint && <p><b>Gợi ý:</b> {question.hint}</p>}<Link to={`/study/${materialId}`}>Mở tài liệu học tập</Link></details>
+        : <div className={styles.questionArea}>
+          <h1 className={styles.question}>{question.prompt}</h1>
+          {isMatching ? <SmartMatching key={`${round}-${question.id}`} terms={activeMatchingTerms} revealed={Boolean(response)} onComplete={correct => { void recordResponse(correct ? "correct" : "incorrect", "", activeMatchingTerms.map(term => ({ term: term.term, definition: term.definition }))); }} /> : question.type === "choice" ? <div className={styles.options}>
+            {question.options.map((option, optionIndex) => {
+              const expected = Boolean(response) && isCorrectAnswer(option, question.answer);
+              const wrong = answer === option && response === "incorrect";
+              return <button key={`${index}-${optionIndex}`} type="button" disabled={Boolean(response)} aria-pressed={answer === option}
+                className={`${styles.option} ${expected ? styles.correct : ""} ${wrong ? styles.incorrect : ""}`} onClick={() => submitAnswer(option)}>
+                <span className={styles.number} aria-label={expected ? "Đúng" : wrong ? "Sai" : undefined}>{expected ? "✓" : wrong ? "×" : optionIndex + 1}</span><span>{option}</span>
+              </button>;
+            })}
+          </div> : <form id="smart-answer-form" className={styles.shortAnswer} onSubmit={event => { event.preventDefault(); submitAnswer(answer); }}>
+            <textarea aria-label="Câu trả lời của bạn" placeholder="Nhập câu trả lời của bạn..." value={answer} onChange={event => setAnswer(event.target.value)} disabled={Boolean(response)} className={response === "correct" ? styles.correctInput : response === "incorrect" ? styles.incorrectInput : undefined} />
+          </form>}
+          <div className={styles.topActions}>
+            <button type="button" className={styles.reveal} onClick={() => { if (response) setHistoryOpen(true); else void recordResponse("revealed"); }}>{response ? "Lịch sử câu hỏi" : "Hiển thị câu trả lời"}</button>
+            <div className={styles.ratings}>{(["positive", "negative"] as const).map(value => <button key={value} type="button" className={value === "negative" ? styles.down : undefined} aria-label={value === "positive" ? "Phản hồi tích cực" : "Phản hồi tiêu cực"} aria-pressed={rating === value} onClick={() => { setRating(value); const sessionQuestion = session?.questions[index]; if (sessionQuestion) void studyApi.sendSessionFeedback(session.id, sessionQuestion.id, value === "positive"); }}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h4v12H2zM8 10l5-8c1-2 4-1 3 2l-1 5h5c2 0 3 1 2 3l-2 8c0 1-1 2-3 2H8z" /></svg></button>)}</div>
+          </div>
+          {rating && <p className={styles.status} role="status">Đã ghi nhận phản hồi trong phiên học này.</p>}
+          <div className={styles.bottomActions}>{response ? <button className={styles.primary} type="button" onClick={() => { void nextQuestion(); }}>{index === totalQuestions - 1 ? "Hoàn thành lượt học" : "Câu hỏi tiếp theo"}</button>
+            : question.type === "short" && answer.trim() ? <button className={styles.primary} type="submit" form="smart-answer-form">Kiểm tra</button>
+              : <button className={styles.primary} type="button" onClick={() => { void recordResponse("skipped"); }}>Bỏ qua</button>}</div>
+          {response && <div className={styles.feedback} role="status"><strong>{resultLabels[response]}</strong><p>{question.coreKnowledge || (currentTerm ? `${currentTerm.term}: ${currentTerm.definition}` : question.answer)}</p>
+            <details><summary>Tìm hiểu thêm</summary><p>{sourceDocument ? `Nguồn: ${sourceDocument.title}` : "Kiến thức từ bộ câu hỏi đã lưu."}</p>{question.hint && <p><b>Gợi ý:</b> {question.hint}</p>}<Link to={`/study/${materialId}`}>Mở tài liệu học tập</Link></details>
+          </div>}
         </div>}
-      </div>}
     {settingsOpen && <SmartStudySettings preferences={preferences} onSave={applyPreferences} onClose={() => setSettingsOpen(false)} />}
     {historyOpen && <StudyModal title="Lịch sử câu hỏi" onClose={() => setHistoryOpen(false)}><p className={styles.note}>Các câu đã luyện tập trong phiên học này.</p><ol className={styles.history}>{history.map((entry, entryIndex) => <li key={entryIndex}><strong>{entry.prompt}</strong><p>{resultLabels[entry.result]}{entry.selected ? ` — ${entry.selected}` : ""}</p><p>Đáp án: {entry.answer}</p></li>)}</ol></StudyModal>}
+    {sessionError && <p role="alert" className={styles.status}>{sessionError}</p>}
     {showPlus && <PlusUpgradeDialog onClose={() => setShowPlus(false)} />}
   </section>;
 }

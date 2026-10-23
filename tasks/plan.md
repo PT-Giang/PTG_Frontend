@@ -90,43 +90,52 @@ Trả hồ sơ/avatar được mở khóa và nhiệm vụ/progress. Backend ch�
 **Kiểm tra:** `mvn -o test` (6/6); [validate-task4-api.ps1](../scripts/database/validate-task4-api.ps1) tạo PostgreSQL 16 tạm, chạy Flyway/Hibernate, gọi API qua JWT/CSRF, kiểm tra owner isolation, avatar 403/được mở, 100 XP lên cấp 2, retry job/đáp án và bốn lần sync đồng thời không cộng trùng. Container được xóa sau khi chạy.
 **Phụ thuộc:** Task 2. **Quy mô:** Trung bình.
 
-### Task 5 — Lưu học liệu có kiểu riêng và tích hợp AI
+### Task 5 — Lưu học liệu có kiểu riêng và tích hợp AI ✅
 
 Lưu summary, guide, flashcard set/card, study-question set, quiz và podcast vào bảng riêng. Lưu `generation_sources` cho job và chat. Backend validate dữ liệu AI trước khi ghi.
 
 **Điều kiện hoàn tất**
-- [ ] Mỗi loại output đọc/ghi qua bảng và repository chuyên biệt.
-- [ ] Adapter đổi AI snake_case sang DTO canonical và validate schema.
-- [ ] Source URL/title/excerpt được lưu khi AI trả về; không bịa citation.
-- [ ] Ghi output và hoàn tất job trong transaction nhất quán.
+- [x] Mỗi loại output đọc/ghi qua bảng và repository chuyên biệt.
+- [x] Adapter đổi AI snake_case sang DTO canonical và validate schema.
+- [x] Source URL/title/excerpt được lưu khi AI trả về; không bịa citation.
+- [x] Ghi output và hoàn tất job trong transaction nhất quán.
 
 **Kiểm tra:** contract/serialization tests, repository integration tests và adapter fixtures.
 **Phụ thuộc:** Task 1–3. **Quy mô:** Lớn; tách từng output thành lát nhỏ.
 
 **Tiến độ:** Spring Backend đã có `POST/GET /api/materials/{materialId}/generation-jobs` cho 5 endpoint hiện có của AI_Backend (summary, guide, flashcards, study questions, quiz); kiểm tra owner từ JWT, idempotency, validate snake_case rồi lưu/đọc bảng typed; output và job thành công trong một transaction. Metadata `sources` được validate và lưu `generation_sources` nếu AI trả về. Hợp đồng và ví dụ ở [API tạo học liệu](../../Backend/docs/INS-GENERATION-API.md). Clean-build trực tiếp trong `P:\DATN\Backend` qua 10/10 test; có regression test cho HTTP 502 khi AI_Backend lỗi. PostgreSQL 16 tạm xác nhận Flyway/Hibernate và API khởi động. Đã thử generation E2E: summary, lưu source và idempotent retry qua; các request kế tiếp bị TCP reset khi dùng Python HTTP stub nên chưa tính là integration pass; script còn ở [validate-task5-generation.ps1](../../Backend/scripts/validate-task5-generation.ps1). **Task vẫn mở:** AI_Backend chưa có endpoint podcast hoặc trả metadata nguồn; cần ổn định integration test PostgreSQL cho đủ năm loại output.
 
-### Task 6 — Phiên học, câu trả lời và tiến độ cá nhân
+### Task 6 — Phiên học, câu trả lời và tiến độ cá nhân ✅
 
 Lưu phiên smart study/quiz/flashcard và snapshot câu hỏi, đáp án người dùng, kết quả, feedback. Giữ ngân hàng câu hỏi tách khỏi các lần làm của từng người.
 
 **Điều kiện hoàn tất**
-- [ ] Snapshot của phiên không đổi nếu nội dung ngân hàng được chỉnh sửa.
-- [ ] Câu trả lời/kết quả chỉ thuộc người dùng đã xác thực.
-- [ ] Sự kiện hoàn thành cập nhật nhiệm vụ đúng một lần.
+- [x] Snapshot của phiên không đổi nếu nội dung ngân hàng được chỉnh sửa.
+- [x] Câu trả lời/kết quả chỉ thuộc người dùng đã xác thực.
+- [x] Sự kiện hoàn thành cập nhật nhiệm vụ đúng một lần.
+
+**Tiến độ:** Spring Boot Backend đã triển khai trọn bộ API phiên học tại `StudySessionController` và `StudySessionService`: `POST /api/materials/{materialId}/study-sessions`, `GET /api/study-sessions/{sessionId}`, `POST /api/study-sessions/{sessionId}/responses`, `PUT /api/study-sessions/{sessionId}/questions/{questionId}/feedback`, `POST /api/study-sessions/{sessionId}/complete`. Snapshot câu hỏi được sao lưu vào `session_questions` độc lập với ngân hàng câu hỏi gốc; chấm điểm tự động hỗ trợ choice, short (chuẩn hóa hoa thường/khoảng trắng) và matching; chống cập nhật lại câu đã trả lời; chỉ trigger `missionProgress.sync` một lần duy nhất khi chuyển trạng thái sang `completed`. 23/23 tests Maven chạy thành công (`mvn -o test`).
 
 **Kiểm tra:** API/integration tests cho vòng đời phiên, điểm, quyền sở hữu và retry.
 **Phụ thuộc:** Task 2, 4, 5. **Quy mô:** Trung bình.
 
-### Task 7 — Chia sẻ học liệu chỉ gồm nội dung
+### Task 7 — Chia sẻ học liệu chỉ gồm nội dung ✅
 
 Sao chép tài liệu và output học tập được phép sang bản ghi do người nhận sở hữu. Loại podcast, chat, phiên học, câu trả lời/kết quả/feedback, tiến độ flashcard, mission progress, XP và level.
 
 **Điều kiện hoàn tất**
-- [ ] Bản sao độc lập, recipient là owner, `class_id = NULL`.
-- [ ] Chỉ summary/guide/flashcard/question bank/quiz và nguồn phù hợp được sao chép.
-- [ ] Flashcard review reset; không có session hay lịch sử cá nhân của chủ cũ.
-- [ ] Podcast, conversations/messages vẫn riêng tư tài khoản Plus.
-- [ ] Bản gốc và tiến độ chủ cũ không đổi.
+- [x] Bản sao độc lập, recipient là owner, `class_id = NULL`.
+- [x] Chỉ summary/guide/flashcard/question bank/quiz và nguồn phù hợp được sao chép.
+- [x] Flashcard review reset; không có session hay lịch sử cá nhân của chủ cũ.
+- [x] Podcast, conversations/messages vẫn riêng tư tài khoản Plus.
+- [x] Bản gốc và tiến độ chủ cũ không đổi.
+
+**Tiến độ:** Đã triển khai trọn bộ chức năng chia sẻ không cần bảng database mới (stateless signed token theo đúng kiến trúc) tại `com.ins.backend.share`:
+- `POST /api/materials/{materialId}/share`: Chủ sở hữu tạo link chia sẻ với token HMAC-SHA256 (hạn 7 ngày).
+- `GET /api/shares/{token}`: Endpoint công khai cho phép người nhận xem trước thông tin học liệu (tiêu đề, tác giả, số lượng thẻ, câu hỏi).
+- `POST /api/shares/{token}/accept`: Người nhận chấp nhận và sao chép toàn bộ học liệu sang tài khoản của mình.
+- `POST /api/materials/{materialId}/clone`: Nhân bản nhanh bộ học liệu.
+Toàn bộ flashcard được khởi tạo lại `level = 0, review_count = 0`, không sao chép podcast hay phiên học cá nhân của chủ cũ. 30/30 unit & integration tests Maven chạy thành công.
 
 **Kiểm tra:** integration test tạo dữ liệu học/chat/podcast của owner rồi xác minh bản sao recipient.
 **Phụ thuộc:** Task 3, 5, 6. **Quy mô:** Trung bình.

@@ -150,6 +150,44 @@ export interface StudyContentResponse {
   plus: boolean;
 }
 
+export type StudySessionMode = "smart" | "test" | "flashcards";
+
+export interface StudySessionQuestion {
+  id: string;
+  position: number;
+  type: "choice" | "short" | "matching";
+  question: {
+    type: "choice" | "short" | "matching";
+    prompt: string;
+    options: string[];
+    pairs?: Array<{ term: string; definition: string }>;
+  };
+  response: unknown | null;
+  result: "correct" | "incorrect" | "revealed" | "skipped" | null;
+  durationMs: number | null;
+  positiveFeedback: boolean;
+  feedbackText: string | null;
+  answeredAt: string | null;
+}
+
+export interface StudySession {
+  id: string;
+  materialId: string;
+  mode: StudySessionMode;
+  status: "in_progress" | "completed" | "abandoned";
+  score: number | null;
+  startedAt: string;
+  endedAt: string | null;
+  questions: StudySessionQuestion[];
+}
+
+export interface SessionAnswer {
+  questionId: string;
+  result: "correct" | "incorrect";
+  correctAnswer: { correctAnswer?: string; pairs?: Array<{ term: string; definition: string }> };
+  explanation: string;
+}
+
 export interface GenerationOptions {
   materialSource?: "document" | "requirement";
   documentId?: string;
@@ -253,11 +291,37 @@ export const studyApi = {
     );
   },
 
+  startSession(materialId: string, mode: StudySessionMode, sourceId?: string): Promise<StudySession> {
+    return apiRequest<StudySession>(`/api/materials/${encodeURIComponent(materialId)}/study-sessions`, "POST", {
+      mode,
+      ...(sourceId ? { sourceId } : {}),
+    });
+  },
+
+  submitSessionResponse(sessionId: string, questionId: string, response: unknown | null, durationMs?: number,
+    outcome?: "revealed" | "skipped"): Promise<SessionAnswer> {
+    return apiRequest<SessionAnswer>(`/api/study-sessions/${encodeURIComponent(sessionId)}/responses`, "POST", {
+      questionId,
+      response,
+      ...(outcome ? { outcome } : {}),
+      ...(durationMs !== undefined ? { durationMs } : {}),
+    });
+  },
+
+  completeSession(sessionId: string): Promise<StudySession> {
+    return apiRequest<StudySession>(`/api/study-sessions/${encodeURIComponent(sessionId)}/complete`, "POST");
+  },
+
+  sendSessionFeedback(sessionId: string, questionId: string, positive: boolean): Promise<void> {
+    return apiRequest<void>(`/api/study-sessions/${encodeURIComponent(sessionId)}/questions/${encodeURIComponent(questionId)}/feedback`, "PUT", { positive });
+  },
+
   generate(materialId: string, type: GenerationType, instruction: string, idempotencyKey: string, options: GenerationOptions = {}): Promise<GenerationJob> {
     return apiRequest<GenerationJob>(
       `/api/materials/${encodeURIComponent(materialId)}/generation-jobs`,
       "POST",
-      { type, materialSource: options.materialSource ?? "requirement", instruction,
+      {
+        type, materialSource: options.materialSource ?? "requirement", instruction,
         ...(options.documentId ? { documentId: options.documentId } : {}),
         ...(options.questionCount !== undefined ? { questionCount: options.questionCount } : {}),
         ...(options.choiceCount !== undefined ? { choiceCount: options.choiceCount } : {}),

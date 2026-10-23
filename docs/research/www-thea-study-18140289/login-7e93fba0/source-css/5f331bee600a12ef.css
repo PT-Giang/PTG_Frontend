@@ -1,1 +1,98 @@
-.login-content{display:flex;flex-direction:column;justify-content:space-evenly;background-color:var(--toast-background-color);padding:var(--large-gap);border-radius:24px;height:100%}.login-content .login-page-divider{margin:var(--large-gap) 0 0 0}.login-content .success-info{color:var(--success-message-color);background-color:var(--background-color)}.login-content .error-info{color:var(--danger-hover);background-color:var(--background-color)}.login-content .login-form-group{margin-top:2dvh}.login-content .login-form-group .text-error{margin-top:.5dvh;color:var(--danger-hover)}.login-content .login-form-group.side-by-side{display:flex;justify-content:space-between}.login-content .login-form-group.side-by-side .remember-me-checkbox label{margin-left:1dvh}.login-content .login-form-group.side-by-side a:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:2px}.login-content .login-form-group.side-by-side a:hover,.login-content .login-form-group.side-by-side a:focus-visible{color:var(--primary-hover)}.login-content .login-form-group.disclaimer-box .login-button{height:2.5rem;display:block;width:100%}.login-content .login-form-group.disclaimer-box .disclaimer-text{margin-top:.5dvh;font-size:.65rem;color:var(--secondary-text-color);display:flex;text-align:center}.login-content .login-form-group.disclaimer-box .disclaimer-text a:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:2px}.login-content .login-form-group.disclaimer-box .disclaimer-text a:hover,.login-content .login-form-group.disclaimer-box .disclaimer-text a:focus-visible{color:var(--primary-hover)}.login-content .login-form-group.alternate-button-container{display:flex;flex-direction:column;align-items:stretch}.login-content .login-form-group.alternate-button-container .alternate-button{height:2.5rem;width:100%}.login-content .login-page-alert{justify-content:center;margin-top:var(--standard-gap);position:relative;padding:.75rem 1.25rem;margin-bottom:1rem;border:1px solid transparent;border-radius:.25rem}
+.login-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    background-color: var(--toast-background-color);
+    padding: var(--large-gap);
+    border-radius: 24px;
+    height: 100%
+}
+
+.login-content .login-page-divider {
+    margin: var(--large-gap) 0 0 0
+}
+
+.login-content .success-info {
+    color: var(--success-message-color);
+    background-color: var(--background-color)
+}
+
+.login-content .error-info {
+    color: var(--danger-hover);
+    background-color: var(--background-color)
+}
+
+.login-content .login-form-group {
+    margin-top: 2dvh
+}
+
+.login-content .login-form-group .text-error {
+    margin-top: .5dvh;
+    color: var(--danger-hover)
+}
+
+.login-content .login-form-group.side-by-side {
+    display: flex;
+    justify-content: space-between
+}
+
+.login-content .login-form-group.side-by-side .remember-me-checkbox label {
+    margin-left: 1dvh
+}
+
+.login-content .login-form-group.side-by-side a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px
+}
+
+.login-content .login-form-group.side-by-side a:hover,
+.login-content .login-form-group.side-by-side a:focus-visible {
+    color: var(--primary-hover)
+}
+
+.login-content .login-form-group.disclaimer-box .login-button {
+    height: 2.5rem;
+    display: block;
+    width: 100%
+}
+
+.login-content .login-form-group.disclaimer-box .disclaimer-text {
+    margin-top: .5dvh;
+    font-size: .65rem;
+    color: var(--secondary-text-color);
+    display: flex;
+    text-align: center
+}
+
+.login-content .login-form-group.disclaimer-box .disclaimer-text a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px
+}
+
+.login-content .login-form-group.disclaimer-box .disclaimer-text a:hover,
+.login-content .login-form-group.disclaimer-box .disclaimer-text a:focus-visible {
+    color: var(--primary-hover)
+}
+
+.login-content .login-form-group.alternate-button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch
+}
+
+.login-content .login-form-group.alternate-button-container .alternate-button {
+    height: 2.5rem;
+    width: 100%
+}
+
+.login-content .login-page-alert {
+    justify-content: center;
+    margin-top: var(--standard-gap);
+    position: relative;
+    padding: .75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem
+}
